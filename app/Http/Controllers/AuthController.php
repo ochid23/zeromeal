@@ -80,11 +80,25 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 
-    public function dashboard()
+  public function dashboard()
     {
-        // Example: Fetch user data from API if needed
-        // $user = $this->apiService->get('/user');
-        
-        return view('dashboard');
+        // Panggil API Backend
+        $response = $this->apiService->get('/dashboard-data');
+
+        // Data Default
+        $expiringItems = [];
+        $shoppingList = [];
+        $recipes = [];
+
+        // --- TAMBAHKAN BARIS DI BAWAH INI ---
+        /** @var \Illuminate\Http\Client\Response $response */
+        if ($response->successful()) {
+            $data = $response->json()['data'];
+            $expiringItems = $data['expiringItems'] ?? [];
+            $shoppingList = $data['shoppingList'] ?? [];
+            $recipes = $data['recipes'] ?? [];
+        }
+
+        return view('dashboard', compact('expiringItems', 'shoppingList', 'recipes'));
     }
 }

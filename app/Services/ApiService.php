@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Http\Client\Response; 
 
 class ApiService
 {
@@ -14,9 +15,6 @@ class ApiService
         $this->baseUrl = config('app.api_base_url', env('API_BASE_URL'));
     }
 
-    /**
-     * Get the headers for the request, including the Bearer token if available.
-     */
     protected function getHeaders()
     {
         $headers = [
@@ -30,11 +28,9 @@ class ApiService
         return $headers;
     }
 
-    /**
-     * Handle login specifically to store the token.
-     */
     public function login($email, $password)
     {
+        /** @var Response $response */
         $response = Http::withHeaders([
             'Accept' => 'application/json',
         ])->post($this->baseUrl . '/login', [
@@ -47,7 +43,6 @@ class ApiService
         if ($response->successful()) {
             $responseData = $response->json();
             
-            // Handle multiple potential response structures
             $token = $responseData['token'] ?? $responseData['access_token'] ?? $responseData['data']['token'] ?? null;
             $user = $responseData['user'] ?? $responseData['data']['user'] ?? null;
 
@@ -63,21 +58,16 @@ class ApiService
         return ['success' => false, 'message' => $response->json()['message'] ?? 'Login failed'];
     }
 
-    /**
-     * Handle registration.
-     */
     public function register($data)
     {
+        /** @var Response $response */
         $response = Http::withHeaders([
             'Accept' => 'application/json',
         ])->post($this->baseUrl . '/register', $data);
 
-        \Illuminate\Support\Facades\Log::info('Register Response:', ['status' => $response->status(), 'body' => $response->json()]);
-
         if ($response->successful()) {
             $responseData = $response->json();
             
-            // Handle multiple potential response structures
             $token = $responseData['token'] ?? $responseData['access_token'] ?? $responseData['data']['token'] ?? null;
             $user = $responseData['user'] ?? $responseData['data']['user'] ?? null;
 
@@ -93,26 +83,42 @@ class ApiService
         return ['success' => false, 'message' => $response->json()['message'] ?? 'Registration failed'];
     }
 
+   /**
+     * @return Response
+     */
     public function get($endpoint, $params = [])
     {
+        /** @var Response */
         return Http::withHeaders($this->getHeaders())
             ->get($this->baseUrl . $endpoint, $params);
     }
 
+    /**
+     * @return Response
+     */
     public function post($endpoint, $data = [])
     {
+        /** @var Response */
         return Http::withHeaders($this->getHeaders())
             ->post($this->baseUrl . $endpoint, $data);
     }
 
+    /**
+     * @return Response
+     */
     public function put($endpoint, $data = [])
     {
+        /** @var Response */
         return Http::withHeaders($this->getHeaders())
             ->put($this->baseUrl . $endpoint, $data);
     }
 
+    /**
+     * @return Response
+     */
     public function delete($endpoint, $data = [])
     {
+        /** @var Response */
         return Http::withHeaders($this->getHeaders())
             ->delete($this->baseUrl . $endpoint, $data);
     }
