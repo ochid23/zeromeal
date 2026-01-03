@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -37,7 +37,7 @@
                     <a href="#" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition">Layanan</a>
                     <a href="#" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition">Harga</a>
                     <a href="#" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition">Hubungi Kami</a>
-                    <a href="#" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition">About Us</a>
+                    <a href="{{ route('home') }}#about-us" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition">About Us</a>
                 </div>
 
                 <div class="flex items-center space-x-4">
@@ -50,7 +50,7 @@
                             </button>
                         </form>
                     @else
-                        <a href="{{ route('login') }}" class="text-sm font-medium text-gray-700 hover:text-green-600 transition">Log In</a>
+                        <a href="{{ route('login') }}" class="px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-full hover:bg-green-700 transition shadow-sm">Log In</a>
                     @endif
                 </div>
             </div>

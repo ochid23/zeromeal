@@ -1,22 +1,56 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="relative overflow-hidden bg-white">
+<div class="bg-white">
     <!-- Hero Section -->
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-32 sm:py-48 lg:py-64 text-center">
-        <h1 class="mx-auto max-w-4xl font-display text-5xl font-medium tracking-tight text-slate-900 sm:text-7xl">
-            Cook Smart. <span class="text-green-600">Waste Less.</span>
-        </h1>
-        <p class="mx-auto mt-6 max-w-2xl text-lg tracking-tight text-slate-700">
-            ZeroMeal helps you plan meals, track ingredients, and save money while helping the planet. Join thousands who are making a difference today.
-        </p>
-        <div class="mt-10 flex justify-center gap-x-6">
-            <a href="{{ route('login') }}" class="rounded-full bg-green-600 px-8 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 transition">
-                Get Started
-            </a>
-            <a href="#" class="rounded-full bg-white border border-gray-300 px-8 py-3 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50 transition">
-                Learn more <span aria-hidden="true">→</span>
-            </a>
+    <div class="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8 lg:py-40">
+        <div class="grid grid-cols-1 gap-x-8 gap-y-16 lg:grid-cols-2 lg:items-center">
+            <div class="max-w-2xl text-center lg:text-left">
+                <h1 class="font-display text-5xl font-medium tracking-tight text-slate-900 sm:text-7xl">
+                    Cook Smart. <span class="text-green-600">Waste Less.</span>
+                </h1>
+                <p class="mt-6 text-lg leading-8 text-slate-700">
+                    ZeroMeal helps you plan meals, track ingredients, and save money while helping the planet. Join thousands who are making a difference today.
+                </p>
+                <div class="mt-10 flex items-center justify-center lg:justify-start gap-x-6">
+                    <a href="{{ route('login') }}" class="rounded-full bg-green-600 px-8 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 transition">
+                        Get Started
+                    </a>
+                    <a href="#" class="rounded-full bg-white border border-gray-300 px-8 py-3 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50 transition">
+                        Learn more <span aria-hidden="true">→</span>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="relative lg:col-span-1">
+                <img src="{{ asset('images/home-bg.png') }}" alt="ZeroMeal Kitchen" class="aspect-[4/3] w-[85%] mx-auto rounded-2xl object-cover lg:aspect-[3/4]">
+            </div>
+        </div>
+    </div>
+
+    <!-- About Us Section -->
+    <div id="about-us" class="py-24 sm:py-32 bg-white">
+        <div class="mx-auto max-w-7xl px-6 lg:px-8">
+            <div class="relative isolate overflow-hidden bg-gray-900 px-6 py-24 text-center shadow-2xl rounded-3xl sm:px-16">
+                <!-- Background visual content (optional gradient/glow) -->
+                <svg viewBox="0 0 1024 1024" class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]" aria-hidden="true">
+                    <circle cx="512" cy="512" r="512" fill="url(#gradient)" fill-opacity="0.7" />
+                    <defs>
+                        <radialGradient id="gradient">
+                            <stop stop-color="#16a34a" /> <!-- Green-600 -->
+                            <stop offset="1" stop-color="#15803d" /> <!-- Green-700 -->
+                        </radialGradient>
+                    </defs>
+                </svg>
+                
+                <h2 class="mx-auto max-w-2xl text-3xl font-bold tracking-tight text-white sm:text-4xl">About ZeroMeal</h2>
+                
+                <p class="mx-auto mt-6 max-w-3xl text-lg leading-8 text-gray-300">
+                    ZeroMeal is a smart kitchen assistant application designed to manage food inventory, reduce food waste, and simplify daily grocery shopping across multiple platforms. Equipped with an expiration date tracker via manual input, recipe recommendations based on available ingredients, and meal planning features, ZeroMeal helps users save money while encouraging more mindful consumption habits.
+                </p>
+
+
+            </div>
         </div>
     </div>
 
