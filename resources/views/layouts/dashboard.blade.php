@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-gray-50">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,209 +7,136 @@
 
     <title>{{ config('app.name', 'ZeroMeal') }}</title>
 
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700&display=swap" rel="stylesheet" />
 
+    <!-- Scripts -->
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         body { font-family: 'Instrument Sans', sans-serif; }
-        /* Custom Scrollbar for horizontal scrolling */
-        .hide-scroll::-webkit-scrollbar {
-            display: none;
-        }
-        .hide-scroll {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
     </style>
 </head>
-<body class="font-sans antialiased bg-gray-50 text-gray-900 min-h-screen flex flex-col">
-
-    <nav class="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                         <img src="{{ asset('images/logo.png') }}" alt="ZeroMeal" class="h-8 w-auto">
-                    </a>
+<body class="h-full">
+    
+    <!-- Sidebar -->
+    <div class="fixed inset-y-0 flex w-72 flex-col">
+        <!-- Sidebar component -->
+        <div class="flex min-h-0 flex-1 flex-col border-r border-gray-200 bg-white">
+            <div class="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
+                <div class="flex flex-shrink-0 items-center px-6">
+                    <img class="h-8 w-auto" src="{{ asset('images/logo.png') }}" alt="ZeroMeal">
                 </div>
-
-                <div class="flex items-center space-x-4">
-                    <div class="text-right hidden sm:block">
-                        <div class="text-sm font-medium text-gray-900">{{ Session::get('user')['name'] ?? 'User' }}</div>
-                        <div class="text-xs text-gray-500">Free Plan</div>
-                    </div>
-                    <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold">
-                        {{ substr(Session::get('user')['name'] ?? 'U', 0, 1) }}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <div class="flex-grow flex max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 gap-6">
-        
-        <aside class="w-64 hidden md:flex flex-col h-fit sticky top-24 space-y-4">
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
-                <nav class="space-y-1">
-                    <a href="{{ route('dashboard') }}" 
-                       class="flex items-center px-4 py-3 rounded-lg transition font-medium group {{ request()->routeIs('dashboard') ? 'bg-green-50 text-green-700' : 'text-gray-600 hover:bg-green-50 hover:text-green-600' }}">
-                        <svg class="mr-3 h-5 w-5 {{ request()->routeIs('dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-green-500' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <nav class="mt-8 flex-1 space-y-1 px-4">
+                    <!-- Dashboard -->
+                    <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <svg class="{{ request()->routeIs('dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-500' }} mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                         </svg>
-                        Dashboard
-                    </a>
-                    
-                    <a href="{{ route('inventory') }}" 
-                       class="flex items-center px-4 py-3 rounded-lg transition font-medium group {{ request()->routeIs('inventory') ? 'bg-green-50 text-green-700' : 'text-gray-600 hover:bg-green-50 hover:text-green-600' }}">
-                        <svg class="mr-3 h-5 w-5 {{ request()->routeIs('inventory') ? 'text-green-600' : 'text-gray-400 group-hover:text-green-500' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                        </svg>
-                        Inventory & Pantry
+                        Overview
                     </a>
 
-                    <a href="{{ route('shopping.index') }}" 
-                       class="flex items-center px-4 py-3 rounded-lg transition font-medium group {{ request()->routeIs('shopping.index') ? 'bg-green-50 text-green-700' : 'text-gray-600 hover:bg-green-50 hover:text-green-600' }}">
-                        <svg class="mr-3 h-5 w-5 {{ request()->routeIs('shopping.index') ? 'text-green-600' : 'text-gray-400 group-hover:text-green-500' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <!-- Inventory -->
+                    <a href="{{ route('inventory') }}" class="{{ request()->routeIs('inventory') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                         <svg class="{{ request()->routeIs('inventory') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-500' }} mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        Inventory
+                    </a>
+
+                    <!-- Shopping List -->
+                    <a href="{{ route('shopping.index') }}" class="{{ request()->routeIs('shopping.index') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <svg class="{{ request()->routeIs('shopping.index') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-500' }} mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                         </svg>
                         Shopping List
                     </a>
 
-                    <a href="{{ route('recipes') }}" 
-                       class="flex items-center px-4 py-3 rounded-lg transition font-medium group {{ request()->routeIs('recipes') ? 'bg-green-50 text-green-700' : 'text-gray-600 hover:bg-green-50 hover:text-green-600' }}">
-                        <svg class="mr-3 h-5 w-5 {{ request()->routeIs('recipes') ? 'text-green-600' : 'text-gray-400 group-hover:text-green-500' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <!-- Recipes -->
+                    <a href="{{ route('recipes') }}" class="{{ request()->routeIs('recipes') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <svg class="{{ request()->routeIs('recipes') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-500' }} mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                         </svg>
                         Recipes
                     </a>
 
-                    <a href="#" class="flex items-center px-4 py-3 rounded-lg transition font-medium group text-gray-600 hover:bg-green-50 hover:text-green-600">
-                        <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    <!-- Meal Planning -->
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <svg class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        Profile
+                        Meal Plan
+                    </a>
+                    
+                     <!-- Settings -->
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md mt-6">
+                        <svg class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Settings
                     </a>
                 </nav>
             </div>
-            
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="w-full flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition font-medium">
-                        <svg class="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        Log Out
-                    </button>
-                </form>
+             <div class="flex flex-shrink-0 border-t border-gray-200 p-4">
+                 <div class="group block w-full flex-shrink-0">
+                    <div class="flex items-center">
+                         <div>
+                            <!-- User Initials Avatar as placeholder -->
+                            <div class="h-9 w-9 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
+                                {{ substr(Auth::user()->name ?? Session::get('user')['nama'] ?? 'U', 0, 1) }}
+                             </div>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-gray-700 group-hover:text-gray-900">{{ Auth::user()->name ?? Session::get('user')['nama'] ?? 'User' }}</p>
+                            
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="text-xs font-medium text-gray-500 group-hover:text-gray-700 hover:underline">Log Out</button>
+                            </form>
+                        </div>
+                    </div>
+                 </div>
             </div>
-        </aside>
+        </div>
+    </div>
 
-        <main class="flex-1 w-full space-y-6">
-            
-            <section>
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
-                        <span class="w-2 h-6 bg-red-500 rounded-full mr-2"></span>
-                        Segera Kadaluarsa
-                    </h3>
-                    <a href="{{ route('inventory') }}" class="text-sm text-green-600 font-medium hover:underline">Lihat Semua</a>
-                </div>
-                
-                <div class="flex space-x-4 overflow-x-auto hide-scroll pb-2">
-                    @forelse($expiringItems as $item)
-                    <div class="min-w-[160px] bg-white border border-red-100 rounded-xl p-4 shadow-sm flex flex-col relative group hover:shadow-md transition">
-                        <div class="absolute top-3 right-3 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                        <div class="text-3xl mb-2">⚠️</div>
-                        <h4 class="font-bold text-gray-800 text-sm mb-1 leading-snug break-words">
-                            {{ $item['name'] }}
-                        </h4>
-                        <p class="text-xs text-gray-500 mb-2">{{ $item['qty'] }}</p>
-                        <div class="mt-auto bg-red-50 text-red-700 text-xs font-bold px-2 py-1 rounded-md inline-block text-center border border-red-200">
-                            {{ $item['days_left'] }} Hari Lagi
-                        </div>
-                    </div>
-                    @empty
-                    <div class="w-full bg-green-50 text-green-700 p-4 rounded-xl border border-green-200 text-center text-sm">
-                        Aman! Tidak ada bahan yang hampir kadaluarsa.
-                    </div>
-                    @endforelse
-                </div>
-            </section>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                <section class="lg:col-span-1">
-                    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm h-full flex flex-col">
-                        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800">Daftar Belanja</h3>
-                            <button class="text-green-600 hover:bg-green-50 p-1.5 rounded-full">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            </button>
-                        </div>
-                        <div class="p-2 flex-1">
-                            <ul class="space-y-1">
-                                @forelse($shoppingList as $list)
-                                <li class="flex items-center p-3 hover:bg-gray-50 rounded-lg group transition cursor-pointer">
-                                    <input type="checkbox" class="w-5 h-5 text-green-600 rounded border-gray-300 focus:ring-green-500" {{ $list['checked'] ? 'checked' : '' }}>
-                                    <div class="ml-3 flex-1">
-                                        <p class="text-sm font-medium text-gray-800 {{ $list['checked'] ? 'line-through text-gray-400' : '' }}">{{ $list['name'] }}</p>
-                                        <p class="text-xs text-gray-500">{{ $list['qty'] }}</p>
-                                    </div>
-                                </li>
-                                @empty
-                                <li class="text-center text-gray-400 text-sm py-8">Belum ada daftar belanja.</li>
-                                @endforelse
-                            </ul>
-                        </div>
-                        <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
-                            <a href="{{ route('shopping.index') }}" class="block w-full text-center text-sm text-gray-600 font-medium hover:text-green-600">
-    Kelola Belanjaan →
-</a>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="lg:col-span-2">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-lg font-bold text-gray-800">Mau Masak Apa?</h3>
-                        <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Berdasarkan stok kamu</span>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        @forelse($recipes as $recipe)
-                        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col">
-                            <div class="h-32 w-full bg-gray-200 relative">
-                                <img src="{{ $recipe['image'] }}" alt="{{ $recipe['title'] }}" class="w-full h-full object-cover">
-                                <div class="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded-md shadow-sm">
-                                    <div class="text-xs font-bold text-green-700 flex items-center">
-                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                                        {{ $recipe['match'] }}% Match
-                                    </div>
+    <!-- Main Content -->
+    <div class="flex flex-1 flex-col pl-72">
+        <main class="flex-1">
+             <!-- Topbar inside main content area -->
+            <div class="sticky top-0 z-10 flex h-16 flex-shrink-0 bg-white shadow-sm">
+                <div class="flex flex-1 justify-between px-4 sm:px-6 lg:px-8">
+                    <div class="flex flex-1">
+                         <form class="flex w-full md:ml-0" action="#" method="GET">
+                            <label for="search-field" class="sr-only">Search</label>
+                            <div class="relative w-full text-gray-400 focus-within:text-gray-600">
+                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center">
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                                    </svg>
                                 </div>
+                                <input id="search-field" class="block h-full w-full border-transparent py-2 pl-8 pr-3 text-gray-900 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm" placeholder="Search..." type="search" name="search">
                             </div>
-                            <div class="p-4 flex-1 flex flex-col">
-                                <h4 class="font-bold text-gray-900 mb-1">{{ $recipe['title'] }}</h4>
-                                <div class="text-xs text-gray-500 mb-4 flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    {{ $recipe['time'] }}
-                                </div>
-                                <button class="mt-auto w-full bg-green-600 text-white text-sm font-semibold py-2 rounded-lg hover:bg-green-700 transition">
-                                    Lihat Resep
-                                </button>
-                            </div>
-                        </div>
-                        @empty
-                        <div class="col-span-2 text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                            <p class="text-gray-500">Belum ada rekomendasi. Isi inventaris kamu dulu!</p>
-                        </div>
-                        @endforelse
+                        </form>
                     </div>
-                </section>
+                    <div class="ml-4 flex items-center md:ml-6">
+                        <button type="button" class="rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                            <span class="sr-only">View notifications</span>
+                             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="py-6">
+                 @yield('content')
             </div>
         </main>
     </div>
-
+    @stack('scripts')
 </body>
 </html>
