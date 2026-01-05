@@ -17,11 +17,17 @@ class PageController extends Controller
     public function inventory()
     {
         // 1. Ambil Data Stok Inventory
-        $invResponse = $this->apiService->get('/inventory');
-        $inventory = $invResponse->successful() ? ($invResponse->json()['data'] ?? []) : [];
+        $invResponse = $this->apiService->get('/inventaris');
+        if ($invResponse->successful()) {
+            $inventory = $invResponse->json()['data'] ?? [];
+            // Log first item to check structure
+            \Illuminate\Support\Facades\Log::debug('INVENTORY_ITEM_STRUCTURE: ' . json_encode($inventory[0] ?? 'EMPTY'));
+        } else {
+            $inventory = [];
+        }
 
         // 2. Ambil Master Data Barang (Untuk Pilihan Dropdown)
-        $masterResponse = $this->apiService->get('/master-barang');
+        $masterResponse = $this->apiService->get('/barang');
         $masterBarang = $masterResponse->successful() ? ($masterResponse->json()['data'] ?? []) : [];
 
         // Kirim keduanya ke View
@@ -31,11 +37,11 @@ class PageController extends Controller
 public function shoppingList()
     {
         // 1. Ambil Daftar Belanja
-        $responseList = $this->apiService->get('/shopping-list');
+        $responseList = $this->apiService->get('/daftar-belanja');
         $shoppingList = $responseList->successful() ? $responseList->json()['data'] : [];
 
         // 2. Ambil Master Barang (Untuk Dropdown Pilihan)
-        $responseMaster = $this->apiService->get('/master-barang');
+        $responseMaster = $this->apiService->get('/barang');
         $masterBarang = $responseMaster->successful() ? $responseMaster->json()['data'] : [];
         
         return view('shopping_list', compact('shoppingList', 'masterBarang'));
@@ -44,7 +50,7 @@ public function shoppingList()
     // Update method storeShoppingItem agar mengirim data yang sesuai
     public function storeShoppingItem(Request $request)
     {
-        $this->apiService->post('/shopping-list', [
+        $this->apiService->post('/daftar-belanja', [
             'barang_id' => $request->barang_id,
             'jumlah_produk' => $request->jumlah_produk,
             'harga' => $request->harga
@@ -62,16 +68,24 @@ public function shoppingList()
             'satuan_baru' => 'nullable|string',
             'jumlah' => 'required|numeric|min:1',
             'lokasi' => 'required|string',
+            'harga' => 'nullable|numeric',
+            'tanggal_pembelian' => 'nullable|date',
+            'tanggal_kadaluarsa' => 'nullable|date',
+            'catatan' => 'nullable|string',
         ]);
 
         // Kirim semua data ke API (API yang akan memilah mana yang dipakai)
-        $response = $this->apiService->post('/inventory', [
+        $response = $this->apiService->post('/inventaris', [
             'barang_id' => $request->barang_id,
             'nama_barang_baru' => $request->nama_barang_baru,
             'kategori_baru' => $request->kategori_baru,
             'satuan_baru' => $request->satuan_baru,
             'jumlah' => $request->jumlah,
             'lokasi' => $request->lokasi,
+            'harga' => $request->harga,
+            'tanggal_pembelian' => $request->tanggal_pembelian,
+            'tanggal_kadaluarsa' => $request->tanggal_kadaluarsa,
+            'catatan' => $request->catatan,
         ]);
 
         /** @var \Illuminate\Http\Client\Response $response */
@@ -79,13 +93,19 @@ public function shoppingList()
             return redirect()->back()->with('success', 'Barang berhasil ditambahkan!');
         }
 
-        return redirect()->back()->with('error', 'Gagal menambahkan barang.');
+        \Illuminate\Support\Facades\Log::error('Gagal Tambah Inventory:', [
+            'status' => $response->status(),
+            'body' => $response->body(),
+            'request_data' => $request->all()
+        ]);
+
+        return redirect()->back()->with('error', 'Gagal menambahkan barang. API Error: ' . $response->status());
     }
 
     public function deleteInventory($id)
     {
         // Panggil API Delete
-        $response = $this->apiService->delete('/inventory/' . $id);
+        $response = $this->apiService->delete('/inventaris/' . $id);
 
         /** @var \Illuminate\Http\Client\Response $response */
         if ($response->successful()) {
@@ -99,11 +119,14 @@ public function shoppingList()
     public function updateInventory(Request $request, $id)
     {
         // Kirim data update ke API
-        $response = $this->apiService->put('/inventory/' . $id, [
-            'barang_id' => $request->barang_id, // Opsional jika mau ganti barang
+        $response = $this->apiService->put('/inventaris/' . $id, [
+            'barang_id' => $request->barang_id,
             'jumlah' => $request->jumlah,
             'lokasi' => $request->lokasi,
-            'tanggal_kadaluarsa' => $request->tanggal_kadaluarsa, // Input Manual Expired
+            'harga' => $request->harga,
+            'tanggal_pembelian' => $request->tanggal_pembelian,
+            'tanggal_kadaluarsa' => $request->tanggal_kadaluarsa,
+            'catatan' => $request->catatan,
         ]);
 
         /** @var \Illuminate\Http\Client\Response $response */

@@ -1,6 +1,14 @@
 @extends('layouts.dashboard')
 
+@section('header_search')
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Inventory & Pantry</h1>
+        <p class="text-sm text-gray-500">Kelola stok bahan makananmu di sini.</p>
+    </div>
+@endsection
+
 @section('content')
+
     @if(session('success'))
         <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
             <strong class="font-bold">Berhasil!</strong> {{ session('success') }}
@@ -12,28 +20,55 @@
                 </div>
             @endif
 
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Inventory & Pantry</h1>
-                    <p class="text-sm text-gray-500">Kelola stok bahan makananmu di sini.</p>
+            <div class="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
+                <!-- Search Bar -->
+                <div class="relative flex-1 w-full">
+                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <input type="text" id="inventorySearch" placeholder="Cari stok bahan (e.g., Telur, Sayur)..." 
+                        class="pl-10 w-full border border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                        onkeyup="filterInventory()">
                 </div>
-                <button onclick="openModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center shadow-sm cursor-pointer">
+
+                <!-- Add Button -->
+                <button onclick="openModal()" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center shadow-sm cursor-pointer whitespace-nowrap h-full">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     Tambah Barang
                 </button>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+
+            <div id="inventoryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 @forelse($inventory as $item)
                     @php
-                        $statusColor = 'bg-gray-100 text-gray-600 border-gray-200';
-                        if($item['status_kadaluarsa'] == 'Kadaluarsa') $statusColor = 'bg-red-100 text-red-700 border-red-200';
-                        elseif ($item['status_kadaluarsa'] == 'Segera Gunakan') $statusColor = 'bg-orange-100 text-orange-700 border-orange-200';
-                        elseif ($item['status_kadaluarsa'] == 'Perhatian') $statusColor = 'bg-yellow-50 text-yellow-700 border-yellow-200';
-                        else $statusColor = 'bg-green-50 text-green-700 border-green-200';
+                        // Hitung sisa hari secara manual di frontend untuk memastikan akurasi
+                        $tglKadaluarsa = \Carbon\Carbon::parse($item['tanggal_kadaluarsa'])->startOfDay();
+                        $hariIni = \Carbon\Carbon::now()->startOfDay();
+                        $sisaHari = $hariIni->diffInDays($tglKadaluarsa, false); // false agar bisa negatif
+
+                        $statusLabel = 'Aman';
+                        $statusColor = 'bg-green-50 text-green-700 border-green-200';
+
+                        if ($sisaHari < 0) {
+                            $statusLabel = 'Kadaluarsa';
+                            $statusColor = 'bg-red-100 text-red-700 border-red-200';
+                        } elseif ($sisaHari == 0) {
+                             $statusLabel = 'Hari Ini!';
+                             $statusColor = 'bg-red-100 text-red-700 border-red-200 font-extrabold';
+                        } elseif ($sisaHari <= 3) {
+                            $statusLabel = 'Segera Gunakan';
+                            $statusColor = 'bg-orange-100 text-orange-700 border-orange-200';
+                        } elseif ($sisaHari <= 7) {
+                            $statusLabel = 'Perhatian';
+                            $statusColor = 'bg-yellow-50 text-yellow-700 border-yellow-200';
+                        }
                     @endphp
 
-                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition relative group flex flex-col h-full">
+                    <div class="inventory-item bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition relative group flex flex-col h-full" data-name="{{ strtolower($item['nama_barang']) }}">
                         
                         <div class="absolute top-4 right-4 z-10 flex space-x-1">
                             <button 
@@ -58,17 +93,23 @@
 
                         <div class="mb-3">
                             <span class="text-xs font-bold px-2.5 py-1 rounded-md border {{ $statusColor }} inline-block">
-                                {{ $item['status_kadaluarsa'] }}
+                                {{ $statusLabel }}
                             </span>
                         </div>
                         
                         <h3 class="text-lg font-bold text-gray-800 mb-1 leading-tight pr-14">{{ $item['nama_barang'] }}</h3>
                         <p class="text-sm text-gray-500 mb-6">{{ $item['kategori'] }}</p>
 
-                        <div class="flex justify-between items-end border-t border-gray-50 pt-4 mt-auto">
+                        <div class="grid grid-cols-3 gap-2 items-end border-t border-gray-50 pt-4 mt-auto">
                             <div>
                                 <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Stok</p>
-                                <p class="font-medium text-gray-700">{{ $item['jumlah'] }} {{ $item['satuan'] }}</p>
+                                <p class="font-medium text-gray-700 truncate" title="{{ $item['jumlah'] }} {{ $item['satuan'] }}">{{ $item['jumlah'] }} {{ $item['satuan'] }}</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Harga</p>
+                                <p class="font-medium text-gray-700 truncate" title="Rp {{ number_format($item['harga'] ?? 0, 0, ',', '.') }}">
+                                    Rp {{ number_format($item['harga'] ?? 0, 0, ',', '.') }}
+                                </p>
                             </div>
                             <div class="text-right">
                                 <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Expired</p>
@@ -112,12 +153,13 @@
                                             <label class="block text-gray-700 text-sm font-bold">Pilih Barang</label>
                                             <button type="button" onclick="toggleInputMode()" class="text-sm font-bold text-green-600 hover:text-green-800 underline focus:outline-none" id="toggleBtn">Input Manual Baru</button>
                                         </div>
-                                        <select id="selectInput" name="barang_id" class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:ring-2 focus:ring-green-500 bg-white">
-                                            <option value="">-- Cari Nama Barang --</option>
+                                        <select id="selectInput" name="barang_id" required class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:ring-2 focus:ring-green-500 bg-white">
+                                            <option value="">-- Pilih Barang (Ketik untuk cari) --</option>
                                             @foreach($masterBarang as $b)
                                                 <option value="{{ $b['barang_id'] }}">{{ $b['nama_barang'] }} ({{ $b['kategori'] }})</option>
                                             @endforeach
                                         </select>
+                                        <p class="text-xs text-gray-500 mt-1">💡 Tip: Ketik huruf pertama nama barang untuk mencari</p>
                                     </div>
                                     <div id="inputMode" class="hidden space-y-3">
                                         <div class="flex justify-between items-center mb-2">
@@ -150,20 +192,41 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-4 mt-4 border-t border-gray-100 pt-4">
+    <div class="grid grid-cols-2 gap-4 mt-4 border-t border-gray-100 pt-4">
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-bold mb-2">Harga (Rp)</label>
+                                            <input type="number" name="harga" placeholder="0" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500">
+                                        </div>
                                         <div>
                                             <label class="block text-gray-700 text-sm font-bold mb-2">Jumlah</label>
                                             <input type="number" name="jumlah" required min="1" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500">
                                         </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4 mt-3">
                                         <div>
-                                            <label class="block text-gray-700 text-sm font-bold mb-2">Lokasi Simpan</label>
-                                            <select name="lokasi" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
-                                                <option value="Kulkas">Kulkas</option>
-                                                <option value="Freezer">Freezer</option>
-                                                <option value="Rak Dapur">Rak Dapur</option>
-                                                <option value="Lemari">Lemari</option>
-                                            </select>
+                                            <label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Pembelian</label>
+                                            <input type="date" name="tanggal_pembelian" value="{{ date('Y-m-d') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500">
                                         </div>
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Kadaluarsa</label>
+                                            <input type="date" name="tanggal_kadaluarsa" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500">
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <label class="block text-gray-700 text-sm font-bold mb-2">Lokasi Simpan</label>
+                                        <select name="lokasi" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
+                                            <option value="Kulkas">Kulkas</option>
+                                            <option value="Freezer">Freezer</option>
+                                            <option value="Rak Dapur">Rak Dapur</option>
+                                            <option value="Lemari">Lemari</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <label class="block text-gray-700 text-sm font-bold mb-2">Catatan (Opsional)</label>
+                                        <textarea name="catatan" rows="2" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Contoh: Beli di pasar, merek X..."></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -206,24 +269,39 @@
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Harga (Rp)</label>
+                                    <input type="number" id="edit_harga" name="harga" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+                                </div>
+                                <div>
                                     <label class="block text-gray-700 text-sm font-bold mb-2">Jumlah</label>
                                     <input type="number" id="edit_jumlah" name="jumlah" class="shadow border rounded w-full py-2 px-3 text-gray-700">
                                 </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-gray-700 text-sm font-bold mb-2">Lokasi</label>
-                                    <select id="edit_lokasi" name="lokasi" class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white">
-                                        <option value="Kulkas">Kulkas</option>
-                                        <option value="Freezer">Freezer</option>
-                                        <option value="Rak Dapur">Rak Dapur</option>
-                                        <option value="Lemari">Lemari</option>
-                                    </select>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Pembelian</label>
+                                    <input type="date" id="edit_tanggal_beli" name="tanggal_pembelian" class="shadow border rounded w-full py-2 px-3 text-gray-700">
                                 </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Kadaluarsa</label>
+                                    <input type="date" id="edit_tanggal" name="tanggal_kadaluarsa" class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:ring-2 focus:ring-green-500">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Lokasi Simpan</label>
+                                <select id="edit_lokasi" name="lokasi" class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white">
+                                    <option value="Kulkas">Kulkas</option>
+                                    <option value="Freezer">Freezer</option>
+                                    <option value="Rak Dapur">Rak Dapur</option>
+                                    <option value="Lemari">Lemari</option>
+                                </select>
                             </div>
 
                             <div>
-                                <label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Kadaluarsa</label>
-                                <input type="date" id="edit_tanggal" name="tanggal_kadaluarsa" class="shadow border rounded w-full py-2 px-3 text-gray-700 focus:ring-2 focus:ring-green-500">
-                                <p class="text-xs text-gray-500 mt-1">Ubah manual jika barang alami (buah/sayur) tidak sesuai estimasi 7 hari.</p>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Catatan</label>
+                                <textarea id="edit_catatan" name="catatan" rows="2" class="shadow border rounded w-full py-2 px-3 text-gray-700"></textarea>
                             </div>
                         </div>
                     </div>
@@ -241,6 +319,33 @@
         </div>
     </div>
 
+    <script>
+        function filterInventory() {
+            // 1. Ambil value search box
+            const input = document.getElementById('inventorySearch');
+            const filter = input.value.toLowerCase();
+            
+            // 2. Ambil semua item inventory
+            const grid = document.getElementById('inventoryGrid');
+            const items = grid.getElementsByClassName('inventory-item');
+
+            let hasVisibleItem = false;
+
+            // 3. Loop dan sembunyikan yang tidak cocok
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const name = item.getAttribute('data-name');
+                
+                if (name.includes(filter)) {
+                    item.classList.remove('hidden');
+                    hasVisibleItem = true;
+                } else {
+                    item.classList.add('hidden');
+                }
+            }
+            // Optional: Show empty state message if no items match (Not implemented yet to keep it simple)
+        }
+    </script>
 @endsection
 
 @stack('scripts')
@@ -291,11 +396,17 @@
             // Isi Form Edit
             document.getElementById('edit_barang_id').value = item.barang_id;
             document.getElementById('edit_jumlah').value = item.jumlah;
+            document.getElementById('edit_harga').value = item.harga;
             document.getElementById('edit_lokasi').value = item.lokasi_penyimpanan;
+            document.getElementById('edit_catatan').value = item.catatan;
             
             // Format tanggal (ambil YYYY-MM-DD)
-            const dateStr = item.tanggal_kadaluarsa.split(' ')[0]; 
-            document.getElementById('edit_tanggal').value = dateStr;
+            if(item.tanggal_kadaluarsa) {
+                document.getElementById('edit_tanggal').value = item.tanggal_kadaluarsa.split(' ')[0]; 
+            }
+            if(item.tanggal_pembelian) {
+                document.getElementById('edit_tanggal_beli').value = item.tanggal_pembelian.split(' ')[0];
+            }
 
             // Set Action URL Form
             const form = document.getElementById('editForm');
@@ -308,4 +419,6 @@
         function closeEditModal() {
             document.getElementById('editModal').classList.add('hidden');
         }
+    </script>
+
     </script>

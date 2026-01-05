@@ -99,6 +99,16 @@ class AuthController extends Controller
             $recipes = $data['recipes'] ?? [];
         }
 
-        return view('dashboard', compact('expiringItems', 'shoppingList', 'recipes'));
+        // Cek apakah inventory kosong untuk trigger onboarding
+        // Kita panggil API inventaris untuk hitung total item
+        $inventoryResponse = $this->apiService->get('/inventaris');
+        $isEmptyInventory = false;
+        
+        if ($inventoryResponse->successful()) {
+            $inventoryData = $inventoryResponse->json()['data'] ?? [];
+            $isEmptyInventory = count($inventoryData) === 0;
+        }
+
+        return view('dashboard', compact('expiringItems', 'shoppingList', 'recipes', 'isEmptyInventory'));
     }
 }
