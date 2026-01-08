@@ -68,9 +68,9 @@
                         }
                     @endphp
 
-                    <div class="inventory-item bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition relative group flex flex-col h-full" data-name="{{ strtolower($item['nama_barang']) }}">
+                    <div onclick="openDetailModal(this)" class="inventory-item cursor-pointer bg-white border border-gray-200 hover:border-green-500 hover:ring-2 hover:ring-green-500 hover:shadow-lg duration-300 rounded-xl p-5 shadow-sm transition relative group flex flex-col h-full" data-name="{{ strtolower($item['nama_barang']) }}" data-item="{{ json_encode($item) }}">
                         
-                        <div class="absolute top-4 right-4 z-10 flex space-x-1">
+                        <div class="absolute top-4 right-4 z-10 flex space-x-1" onclick="event.stopPropagation()">
                             <button 
                                 data-item="{{ json_encode($item) }}" 
                                 onclick="openEditModal(this)" 
@@ -258,13 +258,50 @@
                         </div>
                         
                         <div class="space-y-4">
-                            <div>
-                                <label class="block text-gray-700 text-sm font-bold mb-2">Nama Barang</label>
+                            <!-- Toggle Mode Input: Select vs Manual -->
+                            <div id="editSelectMode">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="block text-gray-700 text-sm font-bold">Nama Barang</label>
+                                    <button type="button" onclick="toggleEditInputMode()" class="text-sm font-bold text-blue-600 hover:text-blue-800 underline focus:outline-none" id="editToggleBtn">Input Manual / Ganti Nama</button>
+                                </div>
                                 <select id="edit_barang_id" name="barang_id" class="shadow border rounded w-full py-2 px-3 text-gray-700 bg-white">
                                     @foreach($masterBarang as $b)
                                         <option value="{{ $b['barang_id'] }}">{{ $b['nama_barang'] }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+
+                             <div id="editInputMode" class="hidden space-y-3">
+                                <div class="flex justify-between items-center mb-2">
+                                     <label class="block text-gray-700 text-sm font-bold">Nama Barang Baru</label>
+                                     <!-- Tombol toggle akan dipindah ke sini via JS -->
+                                </div>
+                                <input type="text" id="editInputName" name="nama_barang_baru" class="shadow border rounded w-full py-2 px-3 focus:ring-2 focus:ring-green-500" placeholder="Contoh: Ikan Salmon">
+                                <div class="grid grid-cols-2 gap-3 mt-3">
+                                    <div>
+                                        <label class="block text-gray-700 text-sm font-bold mb-1">Kategori</label>
+                                        <select id="editInputCat" name="kategori_baru" class="shadow border rounded w-full py-2 px-3 bg-white focus:ring-2 focus:ring-green-500">
+                                            <option value="Protein">Protein</option>
+                                            <option value="Sayuran">Sayuran</option>
+                                            <option value="Karbohidrat">Karbohidrat</option>
+                                            <option value="Bumbu">Bumbu</option>
+                                            <option value="Bahan Pokok">Bahan Pokok</option>
+                                            <option value="Buah">Buah</option>
+                                            <option value="Lainnya">Lainnya</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 text-sm font-bold mb-1">Satuan</label>
+                                        <select id="editInputUnit" name="satuan_baru" class="shadow border rounded w-full py-2 px-3 bg-white focus:ring-2 focus:ring-green-500">
+                                            <option value="kg">Kilogram (kg)</option>
+                                            <option value="gram">Gram (gr)</option>
+                                            <option value="liter">Liter (L)</option>
+                                            <option value="ml">Mililiter (ml)</option>
+                                            <option value="pcs">Pcs / Buah</option>
+                                            <option value="ikat">Ikat</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
@@ -315,6 +352,75 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity" onclick="closeDetailModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="text-center sm:text-left">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-2xl font-bold leading-6 text-gray-900" id="detail_nama_barang">Nama Barang</h3>
+                            <span id="detail_status" class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-800">Status</span>
+                        </div>
+                        
+                        <div class="mt-4 space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-2xl mr-3">📦</span>
+                                    <div>
+                                        <p class="text-[10px] text-gray-500 uppercase font-bold">Stok</p>
+                                        <p class="text-lg font-medium text-gray-900" id="detail_jumlah">0 Pcs</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-2xl mr-3">💰</span>
+                                    <div>
+                                        <p class="text-[10px] text-gray-500 uppercase font-bold">Harga</p>
+                                        <p class="text-lg font-medium text-gray-900" id="detail_harga">Rp 0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                    <p class="text-xs text-gray-500 uppercase font-bold mb-1">Kategori</p>
+                                    <p class="font-medium text-gray-800" id="detail_kategori">-</p>
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                    <p class="text-xs text-gray-500 uppercase font-bold mb-1">Lokasi</p>
+                                    <p class="font-medium text-gray-800" id="detail_lokasi">-</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                     <p class="text-xs text-gray-500 uppercase font-bold mb-1">Tgl Beli</p>
+                                     <p class="text-sm text-gray-700" id="detail_tgl_beli">-</p>
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                     <p class="text-xs text-gray-500 uppercase font-bold mb-1">Tgl Kadaluarsa</p>
+                                     <p class="text-sm text-gray-700" id="detail_tgl_kadaluarsa">-</p>
+                                </div>
+                            </div>
+                            
+                            <div class="border-t pt-4">
+                                <p class="text-xs text-gray-500 uppercase font-bold mb-2">Catatan</p>
+                                <p class="text-gray-600 italic text-sm" id="detail_catatan">Tidak ada catatan.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-6 py-3 bg-green-600 text-base font-bold text-white hover:bg-green-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm transition transform hover:-translate-y-0.5" onclick="closeDetailModal()">
+                        Tutup
+                    </button>
+                    <!-- Optional: Add Edit Button here too -->
+                </div>
             </div>
         </div>
     </div>
@@ -389,7 +495,47 @@
         }
 
         // --- LOGIKA MODAL EDIT ---
+        let isEditManualMode = false;
+
+        function toggleEditInputMode() {
+            isEditManualMode = !isEditManualMode;
+            const selectMode = document.getElementById('editSelectMode');
+            const inputMode = document.getElementById('editInputMode');
+            const toggleBtn = document.getElementById('editToggleBtn');
+            const selectInput = document.getElementById('edit_barang_id');
+            const newInputName = document.getElementById('editInputName');
+
+            if (isEditManualMode) {
+                selectMode.classList.add('hidden');
+                inputMode.classList.remove('hidden');
+                
+                const inputModeLabelContainer = inputMode.querySelector('.flex');
+                inputModeLabelContainer.appendChild(toggleBtn);
+                
+                toggleBtn.innerText = "Kembali ke Pilihan List";
+                selectInput.removeAttribute('name'); // Don't send barang_id if manual
+                newInputName.setAttribute('required', 'required');
+                selectInput.value = ""; 
+            } else {
+                selectMode.classList.remove('hidden');
+                inputMode.classList.add('hidden');
+                
+                const selectModeLabelContainer = selectMode.querySelector('.flex');
+                selectModeLabelContainer.appendChild(toggleBtn);
+
+                toggleBtn.innerText = "Input Manual / Ganti Nama";
+                selectInput.setAttribute('name', 'barang_id'); // Re-enable barang_id
+                newInputName.removeAttribute('required'); 
+                newInputName.value = "";
+            }
+        }
+
         function openEditModal(element) {
+            // Reset Mode ke Pilihan List
+            if(isEditManualMode) {
+                toggleEditInputMode();
+            }
+
             // Ambil data JSON dari atribut tombol yang diklik
             const item = JSON.parse(element.getAttribute('data-item'));
 
@@ -419,6 +565,62 @@
         function closeEditModal() {
             document.getElementById('editModal').classList.add('hidden');
         }
-    </script>
 
+        // --- LOGIKA MODAL DETAIL ---
+        function openDetailModal(element) {
+            const item = JSON.parse(element.getAttribute('data-item'));
+
+            document.getElementById('detail_nama_barang').innerText = item.nama_barang;
+            document.getElementById('detail_kategori').innerText = item.kategori;
+            document.getElementById('detail_jumlah').innerText = item.jumlah + ' ' + item.satuan;
+            
+            // Format Harga
+            const hargaFormatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.harga || 0);
+            document.getElementById('detail_harga').innerText = hargaFormatted;
+
+            document.getElementById('detail_lokasi').innerText = item.lokasi_penyimpanan;
+            
+            // Format Tanggal
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const tglBeli = item.tanggal_pembelian ? new Date(item.tanggal_pembelian).toLocaleDateString('id-ID', options) : '-';
+            const tglExp = item.tanggal_kadaluarsa ? new Date(item.tanggal_kadaluarsa).toLocaleDateString('id-ID', options) : '-';
+
+            document.getElementById('detail_tgl_beli').innerText = tglBeli;
+            document.getElementById('detail_tgl_kadaluarsa').innerText = tglExp;
+            
+            document.getElementById('detail_catatan').innerText = item.catatan || "Tidak ada catatan.";
+
+            // Status Logic (Simple version matching blade)
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const expDate = new Date(item.tanggal_kadaluarsa);
+            const diffTime = expDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            
+            const badge = document.getElementById('detail_status');
+            badge.className = "px-3 py-1 rounded-full text-xs font-bold border "; // reset
+
+            if (diffDays < 0) {
+                badge.innerText = "Kadaluarsa";
+                badge.classList.add("bg-red-100", "text-red-700", "border-red-200");
+            } else if (diffDays === 0) {
+                 badge.innerText = "Hari Ini!";
+                 badge.classList.add("bg-red-100", "text-red-700", "border-red-200");
+            } else if (diffDays <= 3) {
+                badge.innerText = "Segera Gunakan";
+                 badge.classList.add("bg-orange-100", "text-orange-700", "border-orange-200");
+            } else if (diffDays <= 7) {
+                badge.innerText = "Perhatian";
+                 badge.classList.add("bg-yellow-50", "text-yellow-700", "border-yellow-200");
+            } else {
+                badge.innerText = "Aman";
+                 badge.classList.add("bg-green-50", "text-green-700", "border-green-200");
+            }
+
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
     </script>

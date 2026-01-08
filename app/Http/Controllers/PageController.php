@@ -121,6 +121,9 @@ public function shoppingList()
         // Kirim data update ke API
         $response = $this->apiService->put('/inventaris/' . $id, [
             'barang_id' => $request->barang_id,
+            'nama_barang_baru' => $request->nama_barang_baru,
+            'kategori_baru' => $request->kategori_baru,
+            'satuan_baru' => $request->satuan_baru,
             'jumlah' => $request->jumlah,
             'lokasi' => $request->lokasi,
             'harga' => $request->harga,

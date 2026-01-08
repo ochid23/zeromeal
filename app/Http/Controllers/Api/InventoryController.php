@@ -129,10 +129,6 @@ class InventoryController extends Controller
     {
         $user = $request->user();
 
-        // Validasi input
-        // Kita izinkan user mengganti barang_id (misal salah pilih barang)
-        // Dan izinkan set manual tanggal kadaluarsa
-        
         $item = InventarisBarang::where('user_id', $user->user_id)
             ->where('inventaris_id', $id)
             ->first();
@@ -141,23 +137,47 @@ class InventoryController extends Controller
             return response()->json(['success' => false, 'message' => 'Barang tidak ditemukan'], 404);
         }
 
-        // Update data
-        // Jika user mengirim tanggal_kadaluarsa manual, kita pakai itu.
-        // Jika tidak, biarkan data lama atau trigger yang bekerja.
-        
         $updateData = [
             'jumlah' => $request->jumlah,
             'lokasi_penyimpanan' => $request->lokasi,
+            'harga' => $request->harga, // Add handle harga update
+            'catatan' => $request->catatan, // Add handle catatan update
         ];
 
-        // Jika user mengganti jenis barang
-        if ($request->filled('barang_id')) {
-            $updateData['barang_id'] = $request->barang_id;
+        // LOGIKA: Handle Perubahan Barang (Baik via ID atau Nama Baru)
+        $barangId = $request->barang_id;
+
+        // Jika user input manual nama baru
+        if (empty($barangId) && $request->filled('nama_barang_baru')) {
+            $existingBarang = Barang::where('nama_barang', $request->nama_barang_baru)->first();
+
+            if ($existingBarang) {
+                $barangId = $existingBarang->barang_id;
+            } else {
+                // Buat Barang Baru
+                $newBarang = new Barang();
+                $newBarang->nama_barang = $request->nama_barang_baru;
+                $newBarang->kategori = $request->kategori_baru ?? 'Lainnya';
+                $newBarang->satuan_standar = $request->satuan_baru ?? 'pcs';
+                $newBarang->harga = $request->harga ?? 0; 
+                $newBarang->umur_penyimpanan = '30 hari'; // Default
+                $newBarang->save();
+                
+                $barangId = $newBarang->barang_id;
+            }
         }
 
-        // Fitur Spesial: Edit Tanggal Expired Manual
+        // Jika barang_id berubah (baik dari select atau hasil create baru)
+        if (!empty($barangId)) {
+            $updateData['barang_id'] = $barangId;
+        }
+
+        // Fitur Spesial: Edit Tanggal Expired & Beli Manual
         if ($request->filled('tanggal_kadaluarsa')) {
             $updateData['tanggal_kadaluarsa'] = $request->tanggal_kadaluarsa;
+        }
+        if ($request->filled('tanggal_pembelian')) {
+            $updateData['tanggal_pembelian'] = $request->tanggal_pembelian;
         }
 
         $item->update($updateData);
