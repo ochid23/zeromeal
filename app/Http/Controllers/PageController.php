@@ -34,7 +34,7 @@ class PageController extends Controller
         return view('inventory', compact('inventory', 'masterBarang'));
     }
 
-public function shoppingList()
+    public function shoppingList()
     {
         // 1. Ambil Daftar Belanja
         $responseList = $this->apiService->get('/daftar-belanja');
@@ -43,7 +43,7 @@ public function shoppingList()
         // 2. Ambil Master Barang (Untuk Dropdown Pilihan)
         $responseMaster = $this->apiService->get('/barang');
         $masterBarang = $responseMaster->successful() ? $responseMaster->json()['data'] : [];
-        
+
         return view('shopping_list', compact('shoppingList', 'masterBarang'));
     }
 
@@ -139,41 +139,81 @@ public function shoppingList()
 
         return redirect()->back()->with('error', 'Gagal memperbarui data.');
     }
-    public function recipes()
+    private function getDummyRecipes()
     {
-        // Kita gunakan data dummy dulu atau ambil dari API dashboard jika ada endpoint khusus
-        // Untuk sekarang, kita simulasi data resep yang lebih lengkap
-        $recipes = [
+        return [
             [
-                'title' => 'Nasi Goreng Spesial', 
-                'match' => 90, 
+                'id' => 1,
+                'title' => 'Nasi Goreng Spesial',
+                'match' => 90,
                 'time' => '15 min',
                 'image' => 'https://images.unsplash.com/photo-1603133872878-684f57d063f1?w=500&auto=format&fit=crop&q=60',
                 'desc' => 'Nasi goreng lezat dengan bumbu rahasia dan topping telur.'
             ],
             [
-                'title' => 'Sayur Sop Ayam', 
-                'match' => 75, 
+                'id' => 2,
+                'title' => 'Sayur Sop Ayam',
+                'match' => 75,
                 'time' => '30 min',
                 'image' => 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=500&auto=format&fit=crop&q=60',
                 'desc' => 'Sop ayam hangat cocok untuk cuaca dingin.'
             ],
             [
-                'title' => 'Telur Dadar Padang', 
-                'match' => 100, 
+                'id' => 3,
+                'title' => 'Telur Dadar Padang',
+                'match' => 100,
                 'time' => '10 min',
                 'image' => 'https://images.unsplash.com/photo-1598679253544-2c97992403ea?w=500&auto=format&fit=crop&q=60',
                 'desc' => 'Telur dadar tebal khas rumah makan Padang.'
             ],
             [
-                'title' => 'Ayam Kecap Mentega', 
-                'match' => 85, 
+                'id' => 4,
+                'title' => 'Ayam Kecap Mentega',
+                'match' => 85,
                 'time' => '45 min',
                 'image' => 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=500&auto=format&fit=crop&q=60',
                 'desc' => 'Ayam goreng dengan saus kecap mentega yang gurih manis.'
             ],
         ];
+    }
 
-        return view('recipes', compact('recipes'));
+    public function recipes()
+    {
+        $recipes = $this->getDummyRecipes();
+        $favorites = session('favorites', []);
+        return view('recipes', compact('recipes', 'favorites'));
+    }
+
+    public function toggleFavorite(Request $request)
+    {
+        $id = $request->input('id');
+        $favorites = session('favorites', []);
+
+        if (in_array($id, $favorites)) {
+            $favorites = array_diff($favorites, [$id]); // Remove
+        } else {
+            $favorites[] = $id; // Add
+        }
+
+        session(['favorites' => $favorites]);
+
+        return response()->json(['status' => 'success', 'is_favorite' => in_array($id, $favorites)]);
+    }
+
+    public function favoriteRecipes()
+    {
+        $allRecipes = $this->getDummyRecipes();
+        $favoriteIds = session('favorites', []);
+
+        $favorites = array_filter($allRecipes, function ($recipe) use ($favoriteIds) {
+            return in_array($recipe['id'], $favoriteIds);
+        });
+
+        return view('favorite-recipes', compact('favorites'));
+    }
+
+    public function finance()
+    {
+        return view('finance');
     }
 }

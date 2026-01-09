@@ -23,6 +23,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/shopping-list', [PageController::class, 'storeShoppingItem'])->name('shopping.store');
     Route::get('/shopping-list/{id}/toggle', [PageController::class, 'toggleShoppingItem'])->name('shopping.toggle'); // Pakai GET biar gampang di klik link
     Route::delete('/shopping-list/{id}', [PageController::class, 'deleteShoppingItem'])->name('shopping.delete');
+    Route::delete('/shopping-list/{id}', [PageController::class, 'deleteShoppingItem'])->name('shopping.delete');
+    Route::get('/favorite-recipes', [PageController::class, 'favoriteRecipes'])->name('favorite-recipes');
+    Route::get('/finance', [PageController::class, 'finance'])->name('finance');
+    Route::post('/toggle-favorite', [PageController::class, 'toggleFavorite'])->name('toggle-favorite');
 });
 
 // Protected Routes
