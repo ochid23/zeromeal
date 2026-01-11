@@ -1,0 +1,6 @@
+Checking specific files in C:/laragon/www/zeromeal-api/database/
+---------------------------------
+database.sqlite                : 147456 bytes
+database_zeromeal              : NOT FOUND
+zeromeal                       : NOT FOUND
+db.sqlite                      : NOT FOUND

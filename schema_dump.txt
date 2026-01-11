@@ -1,0 +1,46 @@
+Connecting to MySQL...
+
+--- Table: inventaris_barang ---
+inventaris_id (int)
+user_id (int)
+barang_id (int)
+harga (decimal(10,2))
+jumlah (int)
+lokasi_penyimpanan (varchar(100))
+catatan (text)
+tanggal_pembelian (datetime)
+tanggal_kadaluarsa (datetime)
+
+--- Table: daftar_belanja ---
+belanja_id (int)
+user_id (int)
+barang_id (int)
+harga (decimal(10,2))
+jumlah_produk (int)
+status_beli (tinyint(1))
+
+--- Table: barang ---
+barang_id (int)
+nama_barang (varchar(50))
+satuan_standar (varchar(10))
+kategori (varchar(50))
+umur_penyimpanan (int)
+satuan (enum('hari','minggu','bulan','tahun'))
+gambar (varchar(255))
+harga (decimal(10,2))
+
+--- Table: resep ---
+resep_id (int)
+admin_id (int)
+judul (varchar(50))
+deskripsi (varchar(100))
+difficulty (enum('Easy','Medium','Hard'))
+image_url (varchar(100))
+waktu_pembuatan_menit (int)
+kalori_per_porsi (int)
+karbohidrat_gram (decimal(5,2))
+protein_gram (decimal(5,2))
+lemak_gram (decimal(5,2))
+fun_fact (text)
+langkah (text)
+rating (decimal(3,1))

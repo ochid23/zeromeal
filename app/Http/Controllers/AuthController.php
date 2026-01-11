@@ -36,8 +36,26 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
 
+        // 2. Try Admin Login (Fallback - Direct MySQL Check)
+        // Since API might not handle admin table, we check directly.
+        try {
+            $admin = \Illuminate\Support\Facades\DB::connection('mysql_api')
+                ->table('admin')
+                ->where('email', $request->email)
+                ->first();
+
+            if ($admin && $admin->password === $request->password) {
+                $token = base64_encode($admin->email . ':' . time());
+                Session::put('admin_token', $token);
+                Session::put('api_token', $token);
+                return redirect()->route('admin.dashboard');
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Admin Direct DB Login Error: ' . $e->getMessage());
+        }
+
         return back()->withErrors([
-            'email' => $result['message'],
+            'email' => $result['message'] ?? 'Login failed.',
         ]);
     }
 
@@ -52,8 +70,8 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'nama'     => 'required|string|max:100',
-            'email'    => 'required|email|max:50',
+            'nama' => 'required|string|max:100',
+            'email' => 'required|email|max:50',
             'password' => 'required|confirmed|min:8',
             'no_telepon' => 'required|string|max:15',
         ]);
@@ -74,13 +92,13 @@ class AuthController extends Controller
         // Optional: Call API logout endpoint if it exists
         // $this->apiService->post('/logout');
 
-        Session::forget(['api_token', 'user']);
+        Session::forget(['api_token', 'user', 'admin_token']);
         Session::flush();
-        
+
         return redirect()->route('login');
     }
 
-  public function dashboard()
+    public function dashboard()
     {
         // Panggil API Backend
         $response = $this->apiService->get('/dashboard-data');
@@ -90,8 +108,6 @@ class AuthController extends Controller
         $shoppingList = [];
         $recipes = [];
 
-        // --- TAMBAHKAN BARIS DI BAWAH INI ---
-        /** @var \Illuminate\Http\Client\Response $response */
         if ($response->successful()) {
             $data = $response->json()['data'];
             $expiringItems = $data['expiringItems'] ?? [];
@@ -103,7 +119,7 @@ class AuthController extends Controller
         // Kita panggil API inventaris untuk hitung total item
         $inventoryResponse = $this->apiService->get('/inventaris');
         $isEmptyInventory = false;
-        
+
         if ($inventoryResponse->successful()) {
             $inventoryData = $inventoryResponse->json()['data'] ?? [];
             $isEmptyInventory = count($inventoryData) === 0;

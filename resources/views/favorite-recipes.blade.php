@@ -16,26 +16,26 @@
                 <div
                     class="group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
                     <div class="aspect-h-4 aspect-w-3 bg-gray-200 sm:aspect-none group-hover:opacity-75 sm:h-52">
-                        <img src="{{ $recipe['image'] }}" alt="{{ $recipe['title'] }}"
+                        <img src="{{ $recipe['image_url'] ?? 'https://placehold.co/600x400' }}" alt="{{ $recipe['judul'] }}"
                             class="h-full w-full object-cover object-center sm:h-full sm:w-full">
                     </div>
                     <div class="flex flex-1 flex-col space-y-2 p-4">
                         <h3 class="text-lg font-medium text-gray-900">
                             <a href="#">
                                 <span aria-hidden="true" class="absolute inset-0"></span>
-                                {{ $recipe['title'] }}
+                                {{ $recipe['judul'] }}
                             </a>
                         </h3>
-                        <p class="text-sm text-gray-500">{{ $recipe['desc'] }}</p>
+                        <p class="text-sm text-gray-500 line-clamp-2">{{ $recipe['deskripsi'] }}</p>
                         <div class="mt-auto flex items-center justify-between pt-2">
                             <div class="flex items-center space-x-1 text-sm text-gray-500">
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                <span>{{ $recipe['time'] }}</span>
+                                <span>{{ $recipe['waktu_pembuatan_menit'] }} min</span>
                             </div>
-                            <button onclick="removeFavorite({{ $recipe['id'] }}, this)"
+                            <button onclick="removeFavorite({{ $recipe['resep_id'] }}, this)"
                                 class="relative z-10 p-1 text-red-500 hover:text-red-700 transition-colors">
                                 <svg class="h-5 w-5 fill-current" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd"
