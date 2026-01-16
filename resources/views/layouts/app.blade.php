@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,46 +17,60 @@
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <style>
         /* Custom Font override */
-        body { font-family: 'Instrument Sans', sans-serif; }
+        body {
+            font-family: 'Instrument Sans', sans-serif;
+        }
     </style>
 </head>
+
 <body class="font-sans antialiased bg-gray-50 text-gray-900 min-h-screen flex flex-col">
 
     <!-- Navigation -->
     <nav class="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 relative">
-                <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('home') }}">
-                        <img src="{{ asset('images/logo.png') }}" alt="ZeroMeal Logo" class="h-10 w-auto">
-                    </a>
-                </div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16 relative">
+                    <!-- Logo -->
+                    <div class="shrink-0 flex items-center">
+                        <a href="{{ route('home') }}">
+                            <img src="{{ asset('images/logo.png') }}" alt="ZeroMeal Logo" class="h-10 w-auto">
+                        </a>
+                    </div>
 
-                <!-- Navigation Links -->
-                <div class="hidden sm:flex space-x-8 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <a href="#" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition">Layanan</a>
-                    <a href="#" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition">Harga</a>
-                    <a href="#" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition">Hubungi Kami</a>
-                    <a href="{{ route('home') }}#about-us" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition">About Us</a>
-                </div>
+                    <!-- Navigation Links -->
+                    <div
+                        class="hidden sm:flex space-x-8 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                        <a href="#"
+                            class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition">Layanan</a>
+                        <a href="#"
+                            class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition">Harga</a>
+                        <a href="#"
+                            class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition">Hubungi
+                            Kami</a>
+                        <a href="{{ route('home') }}#about-us"
+                            class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition">About
+                            Us</a>
+                    </div>
 
-                <div class="flex items-center space-x-4">
-                    @if(Session::has('api_token'))
-                        <a href="{{ route('dashboard') }}" class="text-sm font-medium text-gray-700 hover:text-green-600 transition">Dashboard</a>
-                        <form method="POST" action="{{ route('logout') }}" class="inline">
-                            @csrf
-                            <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-800 transition cursor-pointer">
-                                Log Out
-                            </button>
-                        </form>
-                    @else
-                        <a href="{{ route('login') }}" class="px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-full hover:bg-green-700 transition shadow-sm">Log In</a>
-                    @endif
+                    <div class="flex items-center space-x-4">
+                        @if(Session::has('api_token'))
+                            <a href="{{ route('dashboard') }}"
+                                class="text-sm font-medium text-gray-700 hover:text-green-600 transition">Dashboard</a>
+                            <form method="POST" action="{{ route('logout') }}" class="inline">
+                                @csrf
+                                <button type="submit"
+                                    class="text-sm font-medium text-red-600 hover:text-red-800 transition cursor-pointer">
+                                    Log Out
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('login') }}"
+                                class="px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-full hover:bg-green-700 transition shadow-sm">Log
+                                In</a>
+                        @endif
+                    </div>
                 </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
     <!-- Page Content -->
     <main class="flex-grow">
@@ -70,4 +85,5 @@
     </footer>
 
 </body>
+
 </html>
