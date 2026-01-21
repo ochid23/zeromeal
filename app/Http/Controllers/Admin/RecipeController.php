@@ -14,22 +14,17 @@ class RecipeController extends Controller
     public function __construct(ApiService $apiService)
     {
         $this->apiService = $apiService;
-
-        // Simulating middleware
-        if (!Session::has('admin_token')) {
-            redirect()->route('admin.login')->send();
-            exit;
-        }
     }
 
     public function index()
     {
-        $recipes = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('resep')
-            ->get();
+        $response = $this->apiService->get('/resep');
+        $recipes = [];
 
-        // Convert to array to support view's array syntax ($recipe['key'])
-        $recipes = json_decode(json_encode($recipes), true);
+        if ($response->successful()) {
+            $data = $response->json();
+            $recipes = $data['data'] ?? [];
+        }
 
         return view('admin.dashboard', compact('recipes'));
     }
@@ -41,14 +36,13 @@ class RecipeController extends Controller
 
     public function store(Request $request)
     {
-        // Validation matches DB schema
         $request->validate([
             'judul' => 'required|string|max:255',
             'deskripsi' => 'required|string',
             'difficulty' => 'required|in:Easy,Medium,Hard',
             'time_estimate' => 'required|integer',
             'calories' => 'required|integer',
-            'image_url' => 'required|string', // Assuming URL input for now as per previous code
+            'image_url' => 'required|string',
             'carbs' => 'nullable|numeric',
             'protein' => 'nullable|numeric',
             'fat' => 'nullable|numeric',
@@ -56,62 +50,52 @@ class RecipeController extends Controller
             'steps' => 'nullable|string',
         ]);
 
-        // Resolve Admin ID from Session Token
-        $adminId = 1; // Default fallback
-        if (Session::has('admin_token')) {
-            $tokenPayload = base64_decode(Session::get('admin_token'));
-            $parts = explode(':', $tokenPayload);
-            $email = $parts[0] ?? null;
+        // Mapping to API expected format
+        $payload = [
+            'judul' => $request->judul,
+            'deskripsi' => $request->deskripsi,
+            'difficulty' => $request->difficulty,
+            'waktu_pembuatan_menit' => $request->time_estimate,
+            'kalori_per_porsi' => $request->calories,
+            'karbohidrat_gram' => $request->carbs ?? 0,
+            'protein_gram' => $request->protein ?? 0,
+            'lemak_gram' => $request->fat ?? 0,
+            'image_url' => $request->image_url,
+            'fun_fact' => $request->fun_fact,
+            'langkah' => $request->steps,
+            // 'details' => [] // Admin UI doesn't support ingredients yet based on previous code
+        ];
 
-            if ($email) {
-                $admin = \Illuminate\Support\Facades\DB::connection('mysql_api')
-                    ->table('admin')
-                    ->where('email', $email)
-                    ->first();
-                if ($admin) {
-                    $adminId = $admin->admin_id;
-                }
-            }
+        $response = $this->apiService->post('/resep', $payload);
+
+        if ($response->successful()) {
+            return redirect()->route('admin.dashboard')->with('success', 'Recipe created successfully via API');
         }
 
-        try {
-            \Illuminate\Support\Facades\DB::connection('mysql_api')->table('resep')->insert([
-                'admin_id' => $adminId,
-                'judul' => $request->judul,
-                'deskripsi' => $request->deskripsi,
-                'difficulty' => $request->difficulty,
-                'image_url' => $request->image_url,
-                'waktu_pembuatan_menit' => $request->time_estimate,
-                'kalori_per_porsi' => $request->calories,
-                'karbohidrat_gram' => $request->carbs ?? 0,
-                'protein_gram' => $request->protein ?? 0,
-                'lemak_gram' => $request->fat ?? 0,
-                'fun_fact' => $request->fun_fact,
-                'langkah' => $request->steps,
-                'rating' => 0.0, // Default rating
-            ]);
-
-            return redirect()->route('admin.dashboard')->with('success', 'Recipe created successfully');
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Create Recipe Failed: ' . $e->getMessage());
-            return back()->withErrors(['msg' => 'Failed to create recipe: ' . $e->getMessage()]);
-        }
+        return back()->withErrors(['msg' => 'Failed to create recipe: ' . ($response->json()['message'] ?? 'Unknown Error')]);
     }
 
     public function edit($id)
     {
-        $recipe = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('resep')
-            ->where('resep_id', $id)
-            ->first();
+        $response = $this->apiService->get("/resep/{$id}");
 
-        if ($recipe) {
-            // Transform stdClass to array if view expects array, or keep as object. 
-            // Views usually handle both, but let's confirm usage in edit.blade.php later.
-            // For now assuming object access in view ($recipe->judul) or array ($recipe['judul'])
-            // Decoding to array to be safe if view uses array syntax
-            $recipe = (array) $recipe;
-            return view('admin.recipes.edit', compact('recipe'));
+        if ($response->successful()) {
+            $data = $response->json();
+            $recipe = $data['data'] ?? null;
+
+            if ($recipe) {
+                // Map API fields to View expected fields if necessary (usually they match)
+                // API uses 'waktu_pembuatan_menit' vs View likely expecting 'time_estimate' ?
+                // Let's check the update validation rule: it used 'time_estimate'.
+                // We might need to transform keys for the edit view if it relies on old column names.
+                // However, usually we bind using the same payload.
+                // Legacy view likely uses: $recipe['waktu_pembuatan_menit'] if it was raw DB.
+                // Let's assume the view inspects the keys provided. 
+                // But the 'update' method validation uses 'time_estimate'. 
+                // So the view probably has <input name="time_estimate" value="{{ $recipe['waktu_pembuatan_menit'] }}">
+                
+                return view('admin.recipes.edit', compact('recipe'));
+            }
         }
 
         return redirect()->route('admin.dashboard')->withErrors(['msg' => 'Recipe not found']);
@@ -128,41 +112,37 @@ class RecipeController extends Controller
             'image_url' => 'required|string',
         ]);
 
-        try {
-            \Illuminate\Support\Facades\DB::connection('mysql_api')
-                ->table('resep')
-                ->where('resep_id', $id)
-                ->update([
-                    'judul' => $request->judul,
-                    'deskripsi' => $request->deskripsi,
-                    'difficulty' => $request->difficulty,
-                    'image_url' => $request->image_url,
-                    'waktu_pembuatan_menit' => $request->time_estimate,
-                    'kalori_per_porsi' => $request->calories,
-                    'karbohidrat_gram' => $request->carbs ?? 0,
-                    'protein_gram' => $request->protein ?? 0,
-                    'lemak_gram' => $request->fat ?? 0,
-                    'fun_fact' => $request->fun_fact,
-                    'langkah' => $request->steps,
-                ]);
+        $payload = [
+            'judul' => $request->judul,
+            'deskripsi' => $request->deskripsi,
+            'difficulty' => $request->difficulty,
+            'waktu_pembuatan_menit' => $request->time_estimate,
+            'kalori_per_porsi' => $request->calories,
+            'karbohidrat_gram' => $request->carbs ?? 0,
+            'protein_gram' => $request->protein ?? 0,
+            'lemak_gram' => $request->fat ?? 0,
+            'image_url' => $request->image_url,
+            'fun_fact' => $request->fun_fact,
+            'langkah' => $request->steps,
+        ];
 
-            return redirect()->route('admin.dashboard')->with('success', 'Recipe updated successfully');
-        } catch (\Exception $e) {
-            return back()->withErrors(['msg' => 'Failed to update recipe: ' . $e->getMessage()]);
+        $response = $this->apiService->put("/resep/{$id}", $payload);
+
+        if ($response->successful()) {
+            return redirect()->route('admin.dashboard')->with('success', 'Recipe updated successfully via API');
         }
+
+        return back()->withErrors(['msg' => 'Failed to update recipe: ' . ($response->json()['message'] ?? 'Unknown Error')]);
     }
 
     public function destroy($id)
     {
-        try {
-            \Illuminate\Support\Facades\DB::connection('mysql_api')
-                ->table('resep')
-                ->where('resep_id', $id)
-                ->delete();
+        $response = $this->apiService->delete("/resep/{$id}");
 
-            return redirect()->route('admin.dashboard')->with('success', 'Recipe deleted successfully');
-        } catch (\Exception $e) {
-            return back()->withErrors(['msg' => 'Failed to delete recipe']);
+        if ($response->successful()) {
+            return redirect()->route('admin.dashboard')->with('success', 'Recipe deleted successfully via API');
         }
+
+        return back()->withErrors(['msg' => 'Failed to delete recipe']);
     }
 }

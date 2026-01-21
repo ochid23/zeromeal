@@ -2,45 +2,10 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\DashboardController;
-use App\Http\Controllers\Api\InventoryController; // Pastikan ini sudah di-import
-use App\Http\Controllers\Api\ShoppingListController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-*/
+// This application is a frontend consumer. All API logic resides in zeromeal-api.
+// Local API routes are disabled to prevent confusion and direct DB access.
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-
-// MOVED HERE: Global scope to avoid middleware 404 issues
-Route::any('/save-preferences', [AuthController::class, 'update']);
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
-
-Route::get('/shopping-list', [ShoppingListController::class, 'index']);
-Route::post('/shopping-list', [ShoppingListController::class, 'store']);
-Route::put('/shopping-list/{id}/toggle', [ShoppingListController::class, 'toggle']);
-Route::delete('/shopping-list/{id}', [ShoppingListController::class, 'destroy']);
-    
-    // Dashboard
-    Route::get('/dashboard-data', [DashboardController::class, 'index']);
-
-    // Inventory
-    Route::get('/inventory', [InventoryController::class, 'index']);
-    Route::post('/inventory', [InventoryController::class, 'store']);
-    Route::get('/master-barang', [InventoryController::class, 'masterData']);
-    Route::put('/inventory/{id}', [InventoryController::class, 'update']);
-
-    // --- BARIS INI YANG KEMUNGKINAN HILANG/BELUM ADA ---
-    Route::delete('/inventory/{id}', [InventoryController::class, 'destroy']);
-    // ---------------------------------------------------
-});
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
