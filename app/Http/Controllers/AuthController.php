@@ -58,9 +58,15 @@ class AuthController extends Controller
     public function showOnboarding()
     {
         try {
+            // FIX: Force clear route cache to resolve persistent 404s on deployment
+            \Illuminate\Support\Facades\Artisan::call('route:clear');
+            \Illuminate\Support\Facades\Artisan::call('config:clear');
+            
             return view('onboarding');
         } catch (\Exception $e) {
-            dd('ONBOARDING ERROR:', $e->getMessage(), $e->getTraceAsString());
+            // If cache clearing fails, still try to show the view
+            \Illuminate\Support\Facades\Log::error('Force Cache Clear Failed', ['error' => $e->getMessage()]);
+            return view('onboarding');
         }
     }
 
