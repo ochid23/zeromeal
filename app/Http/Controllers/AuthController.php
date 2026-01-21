@@ -88,8 +88,8 @@ class AuthController extends Controller
 
         // Call API to update user
         // Call API to update user
-        // Endpoint: GET /save-preferences (Authenticated user) - WORKAROUND for POST 404
-        $response = $this->apiService->get("/save-preferences", [
+        // Endpoint: /magic-save (No /api prefix) - BYPASS FIX
+        $response = $this->apiService->get("/magic-save", [
             'preferensi' => $preferences
         ]);
 
@@ -195,7 +195,7 @@ class AuthController extends Controller
         }
 
         // Call API
-        $response = $this->apiService->get("/save-preferences", $data);
+        $response = $this->apiService->get("/magic-save", $data);
 
         if ($response->successful()) {
              $responseData = $response->json();
