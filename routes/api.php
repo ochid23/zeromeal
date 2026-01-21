@@ -16,13 +16,16 @@ use App\Http\Controllers\Api\ShoppingListController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+// MOVED HERE: Global scope to avoid middleware 404 issues
+Route::any('/save-preferences', [AuthController::class, 'update']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    Route::match(['get', 'post'], '/save-preferences', [AuthController::class, 'update']); // Allow GET as emergency fallback
+
 Route::get('/shopping-list', [ShoppingListController::class, 'index']);
 Route::post('/shopping-list', [ShoppingListController::class, 'store']);
 Route::put('/shopping-list/{id}/toggle', [ShoppingListController::class, 'toggle']);
