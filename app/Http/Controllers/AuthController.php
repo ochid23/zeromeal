@@ -95,10 +95,13 @@ class AuthController extends Controller
         ]);
 
         if ($response->status() === 401) {
+            // DEBUG: Show why it failed instead of redirecting
+            dd('DEBUG 401 LOOP:', $response->json());
+            
             // Token expired or invalid (common after deployment/APP_KEY rotation)
-            Session::forget('api_token');
-            Session::forget('user');
-            return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir. Silakan login kembali untuk melanjutkan.');
+            // Session::forget('api_token');
+            // Session::forget('user');
+            // return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir. Silakan login kembali untuk melanjutkan.');
         }
 
         if ($response->successful()) {
