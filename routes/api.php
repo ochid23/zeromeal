@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    Route::post('/save-preferences', [AuthController::class, 'update']); // Renamed to avoid 404/Cache issues
+    Route::match(['get', 'post'], '/save-preferences', [AuthController::class, 'update']); // Allow GET as emergency fallback
 Route::get('/shopping-list', [ShoppingListController::class, 'index']);
 Route::post('/shopping-list', [ShoppingListController::class, 'store']);
 Route::put('/shopping-list/{id}/toggle', [ShoppingListController::class, 'toggle']);
