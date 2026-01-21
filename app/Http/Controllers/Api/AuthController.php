@@ -100,8 +100,25 @@ class AuthController extends Controller
             $user = auth('sanctum')->user();
         }
 
+        // DEEP FALLBACK: Manually parse header if Guard fails (Common on shared hosting/web routes)
         if (!$user) {
-             return response()->json(['message' => 'Unauthenticated (Manual Check Failed)'], 401);
+            $token = $request->bearerToken();
+            if ($token) {
+                // Find token in DB
+                $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+                if ($accessToken) {
+                    $user = $accessToken->tokenable;
+                }
+            }
+        }
+
+        if (!$user) {
+             // Debug info to see what's happening
+             return response()->json([
+                 'message' => 'Unauthenticated (Manual Check Failed)',
+                 'debug_header' => $request->header('Authorization'),
+                 'debug_token_exists' => $request->bearerToken() ? 'yes' : 'no'
+             ], 401);
         }
 
         // Validasi
