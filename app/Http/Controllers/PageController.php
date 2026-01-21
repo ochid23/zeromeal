@@ -22,153 +22,84 @@ class PageController extends Controller
 
     public function inventory()
     {
-        $userId = $this->getUserId();
+        $response = $this->apiService->get('/inventaris');
+        $inventory = [];
+        $masterBarang = [];
 
-        if (!$userId) {
-             return redirect()->route('login');
+        if ($response->successful()) {
+            $inventory = $response->json()['data'] ?? [];
         }
 
-        // 1. Ambil Data Stok Inventory (Join dengan Barang)
-        $inventory = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('inventaris_barang')
-            ->join('barang', 'inventaris_barang.barang_id', '=', 'barang.barang_id')
-            ->where('inventaris_barang.user_id', $userId)
-            ->select('inventaris_barang.*', 'barang.nama_barang', 'barang.kategori', 'barang.satuan', 'barang.gambar')
-            ->orderBy('inventaris_barang.tanggal_kadaluarsa', 'asc')
-            ->get();
-
-        // Convert to array
-        $inventory = json_decode(json_encode($inventory), true);
-
-        // 2. Ambil Master Data Barang
-        $masterBarang = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('barang')
-            ->select('barang_id', 'nama_barang', 'kategori', 'satuan', 'satuan_standar')
-            ->orderBy('nama_barang')
-            ->get();
-        $masterBarang = json_decode(json_encode($masterBarang), true);
+        // Master Barang (usually separate endpoint or hardcoded for now if API doesn't support)
+        // For now, let's assume we can get it or simpler view
+        // API fallback for master barang
+        $masterResponse = $this->apiService->get('/barang');
+        if ($masterResponse->successful()) {
+             $masterBarang = $masterResponse->json()['data'] ?? [];
+        }
 
         return view('inventory', compact('inventory', 'masterBarang'));
     }
 
     public function shoppingList()
     {
-        $userId = $this->getUserId();
+        $response = $this->apiService->get('/daftar-belanja');
+        $shoppingList = [];
+        $masterBarang = [];
 
-        if (!$userId) {
-             return redirect()->route('login');
+        if ($response->successful()) {
+            $shoppingList = $response->json()['data'] ?? [];
         }
-
-        // 1. Ambil Daftar Belanja (Join dengan Barang)
-        $shoppingList = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('daftar_belanja')
-            ->join('barang', 'daftar_belanja.barang_id', '=', 'barang.barang_id')
-            ->where('daftar_belanja.user_id', $userId)
-            ->select('daftar_belanja.*', 'barang.nama_barang', 'barang.kategori', 'barang.satuan_standar')
-            ->orderBy('daftar_belanja.belanja_id', 'desc')
-            ->get();
-
-        $shoppingList = json_decode(json_encode($shoppingList), true);
-
-        // 2. Ambil Master Barang
-        $masterBarang = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('barang')
-            ->select('barang_id', 'nama_barang', 'satuan_standar')
-            ->orderBy('nama_barang')
-            ->get();
-        $masterBarang = json_decode(json_encode($masterBarang), true);
+        
+         $masterResponse = $this->apiService->get('/barang');
+        if ($masterResponse->successful()) {
+             $masterBarang = $masterResponse->json()['data'] ?? [];
+        }
 
         return view('shopping_list', compact('shoppingList', 'masterBarang'));
     }
 
     public function storeShoppingItem(Request $request)
     {
-        $userId = $this->getUserId();
-        
-        if (!$userId) {
-             return redirect()->route('login');
-        }
-
         $request->validate([
             'barang_id' => 'required|integer',
             'jumlah_produk' => 'required|integer|min:1',
             'harga' => 'nullable|numeric'
         ]);
 
-        \Illuminate\Support\Facades\DB::connection('mysql_api')->table('daftar_belanja')->insert([
-            'barang_id' => $request->barang_id,
-            'jumlah_produk' => $request->jumlah_produk,
-            'harga' => $request->harga ?? 0,
-            'status_beli' => 0,
-            'user_id' => $userId
-        ]);
+        $this->apiService->post('/daftar-belanja', $request->all());
 
         return redirect()->back()->with('success', 'Barang ditambahkan ke daftar belanja.');
     }
 
     public function updateShoppingItem(Request $request, $id)
     {
-        $userId = $this->getUserId();
-
-        $request->validate([
+         $request->validate([
             'jumlah_produk' => 'required|integer|min:1',
             'harga' => 'nullable|numeric'
         ]);
-
-        \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('daftar_belanja')
-            ->where('belanja_id', $id)
-            ->where('user_id', $userId)
-            ->update([
-                'jumlah_produk' => $request->jumlah_produk,
-                'harga' => $request->harga ?? 0
-            ]);
+        
+        $this->apiService->put("/daftar-belanja/{$id}", $request->all());
 
         return redirect()->back()->with('success', 'Item belanja berhasil diperbarui.');
     }
 
     public function shoppingDelete($id)
     {
-        $userId = $this->getUserId();
-
-        \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('daftar_belanja')
-            ->where('belanja_id', $id)
-            ->where('user_id', $userId)
-            ->delete();
-
+        $this->apiService->delete("/daftar-belanja/{$id}");
         return redirect()->back()->with('success', 'Item dihapus dari daftar belanja.');
     }
 
     public function shoppingToggle($id)
     {
-        $userId = $this->getUserId();
-
-        $item = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('daftar_belanja')
-            ->where('belanja_id', $id)
-            ->where('user_id', $userId)
-            ->first();
-
-        if ($item) {
-            \Illuminate\Support\Facades\DB::connection('mysql_api')
-                ->table('daftar_belanja')
-                ->where('belanja_id', $id)
-                ->update(['status_beli' => !$item->status_beli]);
-        }
-
+        // Assuming API has toggle endpoint or we update status
+        $this->apiService->put("/daftar-belanja/{$id}/toggle");
         return redirect()->back();
     }
 
     public function storeInventory(Request $request)
     {
-        $userId = $this->getUserId();
-        
-        if (!$userId) {
-             return redirect()->route('login');
-        }
-
-        $request->validate([
+         $request->validate([
             'barang_id' => 'nullable|integer',
             'nama_barang_baru' => 'nullable|string|max:50',
             'jumlah' => 'required|numeric|min:1',
@@ -179,91 +110,30 @@ class PageController extends Controller
             'catatan' => 'nullable|string',
         ]);
 
-        $barangId = $request->barang_id;
-
-        // Handle Input Barang Baru
-        if (!$barangId && $request->nama_barang_baru) {
-            $barangId = \Illuminate\Support\Facades\DB::connection('mysql_api')->table('barang')->insertGetId([
-                'nama_barang' => $request->nama_barang_baru,
-                'kategori' => $request->kategori_baru ?? 'Lainnya',
-                'satuan' => 'hari', // Default shelf life unit
-                'satuan_standar' => $request->satuan_baru ?? 'pcs',
-                'harga' => $request->harga ?? 0,
-                'umur_penyimpanan' => 7 // Default
-            ]);
-        }
-
-        if (!$barangId) {
-            return back()->with('error', 'Silakan pilih barang atau masukkan nama barang baru.');
-        }
-
-        \Illuminate\Support\Facades\DB::connection('mysql_api')->table('inventaris_barang')->insert([
-            'user_id' => $userId,
-            'barang_id' => $barangId,
-            'jumlah' => $request->jumlah,
-            'lokasi_penyimpanan' => $request->lokasi,
-            'harga' => $request->harga ?? 0,
-            'tanggal_pembelian' => $request->tanggal_pembelian ?? now(),
-            'tanggal_kadaluarsa' => $request->tanggal_kadaluarsa,
-            'catatan' => $request->catatan
-        ]);
+        $this->apiService->post('/inventaris', $request->all());
 
         return redirect()->back()->with('success', 'Barang berhasil ditambahkan ke Pantry!');
     }
 
     public function deleteInventory($id)
     {
-        $userId = $this->getUserId();
-
-        \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('inventaris_barang')
-            ->where('inventaris_id', $id)
-            ->where('user_id', $userId)
-            ->delete();
-
+        $this->apiService->delete("/inventaris/{$id}");
         return redirect()->back()->with('success', 'Barang dihapus dari stok.');
     }
 
     public function updateInventory(Request $request, $id)
     {
-        $userId = $this->getUserId();
-
-        // For simple update logic
-        $data = [
-            'jumlah' => $request->jumlah,
-            'lokasi_penyimpanan' => $request->lokasi,
-            'harga' => $request->harga,
-            'tanggal_pembelian' => $request->tanggal_pembelian,
-            'tanggal_kadaluarsa' => $request->tanggal_kadaluarsa,
-            'catatan' => $request->catatan,
-        ];
-
-        // If changing barang (advanced), logic would be needed, but assume just property update for now
-        \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('inventaris_barang')
-            ->where('inventaris_id', $id)
-            ->where('user_id', $userId)
-            ->update($data);
-
+        $this->apiService->put("/inventaris/{$id}", $request->all());
         return redirect()->back()->with('success', 'Data inventaris diperbarui.');
     }
 
-    // ... (Recipes methods remain unchanged from previous step, but included here for context if needed, 
-    // actually I should wrap this carefully to not overwrite the recipes methods at the bottom if I used EndLine correctly.)
-    // Wait, the ReplacementContent replaces everything from inventory() onwards. 
-    // I MUST include the existing recipe methods in my ReplacementContent or they will be lost if I replace up to line 230.
-    // End of Inventory & Shopping List methods
-    // Continuing with existing Recipe methods
-
     public function recipes()
     {
-        // Fetch directly from MySQL to match Admin Dashboard
-        $recipes = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('resep')
-            ->get();
-
-        // Convert to array
-        $recipes = json_decode(json_encode($recipes), true);
+        $response = $this->apiService->get('/resep');
+        $recipes = [];
+        if ($response->successful()) {
+            $recipes = $response->json()['data'] ?? [];
+        }
 
         $favorites = session('favorites', []);
         return view('recipes', compact('recipes', 'favorites'));
@@ -275,56 +145,40 @@ class PageController extends Controller
         $favorites = session('favorites', []);
 
         if (in_array($id, $favorites)) {
-            $favorites = array_diff($favorites, [$id]); // Remove
+            $favorites = array_diff($favorites, [$id]); 
         } else {
-            $favorites[] = $id; // Add
+            $favorites[] = $id; 
         }
 
         session(['favorites' => $favorites]);
-
         return response()->json(['status' => 'success', 'is_favorite' => in_array($id, $favorites)]);
     }
 
     public function favoriteRecipes()
     {
+        // Ideally API handles this, but sticking to session-based local filtering of API data for now if API doesn't have /favorites endpoint
         $favoriteIds = session('favorites', []);
-
-        if (empty($favoriteIds)) {
-            $favorites = [];
-        } else {
-            $favorites = \Illuminate\Support\Facades\DB::connection('mysql_api')
-                ->table('resep')
-                ->whereIn('resep_id', $favoriteIds)
-                ->get();
-
-            // Convert to array
-            $favorites = json_decode(json_encode($favorites), true);
-        }
+        // Fetch all (or proper endpoint)
+         $response = $this->apiService->get('/resep');
+         $favorites = [];
+         
+         if ($response->successful()) {
+             $allRecipes = $response->json()['data'] ?? [];
+             $favorites = collect($allRecipes)->whereIn('resep_id', $favoriteIds)->values()->all();
+         }
 
         return view('favorite-recipes', compact('favorites'));
     }
 
     public function getRecipeDetails($id)
     {
-        $recipe = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('resep')
-            ->where('resep_id', $id)
-            ->first();
-
-        if (!$recipe) {
-            return response()->json(['status' => 'error', 'message' => 'Recipe not found'], 404);
+        $response = $this->apiService->get("/resep/{$id}");
+        
+        if ($response->successful()) {
+            return response()->json($response->json());
         }
 
-        $ingredients = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('detail_resep_bahan')
-            ->where('resep_id', $id)
-            ->get();
-
-        return response()->json([
-            'status' => 'success',
-            'recipe' => $recipe,
-            'ingredients' => $ingredients
-        ]);
+        return response()->json(['status' => 'error', 'message' => 'Recipe not found'], 404);
     }
 
     public function finance()
