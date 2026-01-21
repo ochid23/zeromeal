@@ -84,18 +84,22 @@ class AuthController extends Controller
         
         if (!$userId) return redirect()->route('login');
 
+        $preferences = json_encode($request->only('source', 'goal', 'cooking_frequency'));
+
+        // REVERTED TO API CALL AS REQUESTED
+        // Endpoint: /magic-save (Full URL to bypass API prefix logic)
         $response = $this->apiService->getUrl(url('/magic-save'), [
             'preferensi' => $preferences
         ]);
 
         if ($response->status() === 401) {
-            // DEBUG: Show why it failed instead of redirecting
-            dd('DEBUG 401 LOOP:', $response->json());
+            // DEBUG: Check for DB Connection Split-Brain
+            $debugParams = $response->json();
+            $debugParams['server_db_default'] = config('database.default');
+            $debugParams['user_model_connection'] = (new User())->getConnectionName();
+            $debugParams['token_model_connection'] = (new \Laravel\Sanctum\PersonalAccessToken())->getConnectionName();
             
-            // Token expired or invalid (common after deployment/APP_KEY rotation)
-            // Session::forget('api_token');
-            // Session::forget('user');
-            // return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir. Silakan login kembali untuk melanjutkan.');
+            dd('DEBUG 401 (API RESTORED):', $debugParams);
         }
 
         if ($response->successful()) {
