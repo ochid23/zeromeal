@@ -94,6 +94,13 @@ class AuthController extends Controller
             'preferensi' => $preferences
         ]);
 
+        if ($response->status() === 401) {
+            // Token expired or invalid (common after deployment/APP_KEY rotation)
+            Session::forget('api_token');
+            Session::forget('user');
+            return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir. Silakan login kembali untuk melanjutkan.');
+        }
+
         if ($response->successful()) {
             // Update session user
             $updatedUser = $response->json()['data'] ?? $userSession;
