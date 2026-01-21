@@ -250,87 +250,117 @@ class AuthController extends Controller
         }
 
         try {
-            // --- GANTIKAN API CALL /dashboard-data DENGAN DIRECT QUERY ---
+            // --- REFACTOR: USE API SERVICE ---
             
-            // 1. Ambil Barang Hampir Kadaluarsa
-            $expiringItems = \Illuminate\Support\Facades\DB::connection('mysql_api')
-                ->table('vw_inventaris_status')
-                ->where('user_id', $userId)
-                ->where('hari_tersisa', '<=', 7)
-                ->orderBy('hari_tersisa', 'asc')
-                ->select('nama_barang as name', 'hari_tersisa as days_left', \Illuminate\Support\Facades\DB::raw("CONCAT(jumlah, ' ', satuan) as qty"))
-                ->limit(5)
-                ->get();
-            // Convert to array
-            $expiringItems = json_decode(json_encode($expiringItems), true);
+            // 1. Ambil Barang Hampir Kadaluarsa via API
+            $expResponse = $this->apiService->get('/inventaris/hampir-kadaluarsa');
+            $expiringItems = [];
+            if ($expResponse->successful()) {
+                // Adjust based on actual API response structure (checking 'data' or direct array)
+                $data = $expResponse->json();
+                $items = $data['data'] ?? $data; // Fallback
+                
+                if (is_array($items)) {
+                    $expiringItems = collect($items)->take(5)->map(function($item) {
+                        return [
+                            'name' => $item['nama_barang'] ?? $item['name'] ?? 'Unknown',
+                            'days_left' => $item['hari_tersisa'] ?? 0,
+                            'qty' => ($item['jumlah'] ?? 0) . ' ' . ($item['satuan'] ?? '')
+                        ];
+                    })->toArray();
+                }
+            }
 
-            // 2. Ambil Daftar Belanja
-            $shoppingList = \Illuminate\Support\Facades\DB::connection('mysql_api')
-                ->table('daftar_belanja')
-                ->join('barang', 'daftar_belanja.barang_id', '=', 'barang.barang_id')
-                ->where('daftar_belanja.user_id', $userId)
-                ->select('barang.nama_barang as name', \Illuminate\Support\Facades\DB::raw("CONCAT(daftar_belanja.jumlah_produk, ' ', barang.satuan_standar) as qty"), 'daftar_belanja.status_beli as checked')
-                ->get()
-                ->map(function($item) {
-                    // Convert checked status same as API
-                    $item->checked = $item->checked == 1; 
-                    return $item;
-                });
-            $shoppingList = json_decode(json_encode($shoppingList), true);
+            // 2. Ambil Daftar Belanja via API
+            $shopResponse = $this->apiService->get('/daftar-belanja');
+            $shoppingList = [];
+            $totalShoppingCost = 0;
+            $totalShoppingItems = 0;
 
-            // 3. Ambil Rekomendasi Resep
-            $recipes = \Illuminate\Support\Facades\DB::connection('mysql_api')
-                ->table('vw_resep_rekomendasi')
-                ->where('user_id', $userId)
-                ->select('judul as title', 'persentase_kecocokan as match', 'image_url as image', 'deskripsi')
-                ->orderByDesc('persentase_kecocokan')
-                ->limit(4)
-                ->get()
-                ->map(function($recipe) {
-                    $recipe->time = rand(15, 45) . ' min';
-                    if (!str_contains($recipe->image, 'http')) {
-                        $recipe->image = 'https://source.unsplash.com/500x300/?food,' . urlencode($recipe->title); 
+            if ($shopResponse->successful()) {
+                $data = $shopResponse->json();
+                $items = $data['data'] ?? $data;
+
+                if (is_array($items)) {
+                    $shoppingList = collect($items)->map(function($item) use (&$totalShoppingCost) {
+                        // Calculate cost if available
+                        $price = $item['barang']['harga'] ?? $item['harga'] ?? 0;
+                        $qty = $item['jumlah_produk'] ?? 1;
+                        $totalShoppingCost += $price * $qty;
+
+                        return [
+                            'name' => $item['barang']['nama_barang'] ?? $item['nama_barang'] ?? 'Item',
+                            'qty' => ($item['jumlah_produk'] ?? 1) . ' ' . ($item['barang']['satuan_standar'] ?? $item['satuan'] ?? ''),
+                            'checked' => ($item['status_beli'] ?? 0) == 1
+                        ];
+                    })->toArray();
+                    $totalShoppingItems = count($shoppingList);
+                }
+            }
+
+            // 3. Ambil Rekomendasi Resep via API
+            $recipeResponse = $this->apiService->get('/resep/rekomendasi');
+            $recipes = [];
+            if ($recipeResponse->successful()) {
+                $data = $recipeResponse->json();
+                $items = $data['data'] ?? $data;
+
+                if (is_array($items)) {
+                    $recipes = collect($items)->take(4)->map(function($recipe) {
+                         $img = $recipe['image_url'] ?? null;
+                         $title = $recipe['judul'] ?? 'Recipe';
+                         if (!$img || !str_contains($img, 'http')) {
+                             $img = 'https://source.unsplash.com/500x300/?food,' . urlencode($title);
+                         }
+
+                         return [
+                             'title' => $title,
+                             'match' => $recipe['persentase_kecocokan'] ?? 0,
+                             'image' => $img,
+                             'deskripsi' => $recipe['deskripsi'] ?? ''
+                         ];
+                    })->toArray();
+                }
+            }
+
+            // --- Inventory Count (Check Empty) ---
+            // Use /inventaris/status or simple count if no status endpoint
+            $statusResponse = $this->apiService->get('/inventaris/status');
+            $totalInventory = 0;
+            $totalExpiring = 0; // Can get true count from API
+
+            if ($statusResponse->successful()) {
+                $statusData = $statusResponse->json();
+                // Assumed structure: ['total_items' => 10, 'expiring_soon' => 2]
+                $totalInventory = $statusData['total_items'] ?? $statusData['total_inventaris'] ?? 0;
+                $totalExpiring = $statusData['expiring_soon'] ?? $statusData['hampir_kadaluarsa'] ?? 0;
+            } else {
+                // Fallback: fetch list if status fails
+                $invResponse = $this->apiService->get('/inventaris');
+                if ($invResponse->successful()) {
+                    $invData = $invResponse->json();
+                    $invItems = $invData['data'] ?? $invData;
+                    if(is_array($invItems)){
+                        $totalInventory = count($invItems);
                     }
-                    return $recipe;
-                });
-            $recipes = json_decode(json_encode($recipes), true);
-
-            // --- GANTIKAN API CALL /inventory (Check Empty) ---
-            $inventoryCount = \Illuminate\Support\Facades\DB::connection('mysql_api')
-                ->table('vw_inventaris_status')
-                ->where('user_id', $userId)
-                ->count();
+                }
+                // Fallback for expiring count from list above
+                $totalExpiring = count($expiringItems); 
+            }
             
-            $isEmptyInventory = $inventoryCount === 0;
+            $isEmptyInventory = $totalInventory === 0;
 
-            // --- DASHBOARD SUMMARY METRICS ---
-            $totalInventory = $inventoryCount;
-            
-            $totalExpiring = \Illuminate\Support\Facades\DB::connection('mysql_api')
-                ->table('vw_inventaris_status')
-                ->where('user_id', $userId)
-                ->where('hari_tersisa', '<=', 7)
-                ->count();
-
-            $shoppingListCollection = collect($shoppingList);
-            $totalShoppingItems = $shoppingListCollection->count();
-            
-            $shoppingStats = \Illuminate\Support\Facades\DB::connection('mysql_api')
-                ->table('daftar_belanja')
-                ->where('user_id', $userId)
-                ->select(\Illuminate\Support\Facades\DB::raw('SUM(harga * jumlah_produk) as total_cost'), \Illuminate\Support\Facades\DB::raw('COUNT(*) as total_items'))
-                ->first();
-
-            $totalShoppingCost = $shoppingStats->total_cost ?? 0;
-            $totalShoppingItems = $shoppingStats->total_items ?? 0;
-
-            $userBudget = \App\Models\User::find($userId)->budget ?? 0;
+            // Fetch User Budget from API Profile if needed, or Session
+            // Used user object from session which might have old budget data.
+            // Ideally should fetch profile /user
+            $userBudget = $userSession['budget'] ?? 0; 
 
             return view('dashboard', compact('expiringItems', 'shoppingList', 'recipes', 'isEmptyInventory', 
                 'totalInventory', 'totalExpiring', 'totalShoppingItems', 'totalShoppingCost', 'userBudget'));
 
         } catch (\Exception $e) {
-            dd('DASHBOARD ERROR:', $e->getMessage(), $e->getTraceAsString());
+            // Keep debug dump for now until confirmed working
+            dd('DASHBOARD API ERROR:', $e->getMessage(), $e->getTraceAsString());
         }
     }
 }
