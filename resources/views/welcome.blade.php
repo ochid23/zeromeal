@@ -67,7 +67,7 @@
         </div>
 
         <!-- Features Section placeholder -->
-        <div class="bg-green-600 py-24 sm:py-32">
+        <div id="services" class="bg-green-600 py-24 sm:py-32">
             <div class="mx-auto max-w-7xl px-6 lg:px-8">
                 <div class="mx-auto max-w-2xl lg:text-center">
                     <h2 class="text-base font-semibold leading-7 text-green-100">Faster & Smarter</h2>

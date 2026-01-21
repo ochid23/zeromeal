@@ -1,16 +1,14 @@
 @extends('layouts.dashboard')
 
+@section('header_search')
+    <div class="flex flex-col justify-center">
+        <h1 class="text-xl font-bold text-gray-900 leading-tight">Finance & Budgeting</h1>
+        <p class="text-xs text-gray-500 hidden sm:block">Manage your weekly meal budget.</p>
+    </div>
+@endsection
+
 @section('content')
     <div class="space-y-6" x-data="financeApp()">
-        <div class="md:flex md:items-center md:justify-between">
-            <div class="min-w-0 flex-1">
-                <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-                    Finance & Budgeting
-                </h2>
-                <p class="mt-1 text-sm text-gray-500">Manage your weekly meal budget and shopping list.</p>
-            </div>
-        </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Budget & Summary Card -->
             <div class="lg:col-span-1 space-y-6">

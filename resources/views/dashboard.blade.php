@@ -282,45 +282,115 @@
     @endif
     {{-- END ONBOARDING MODAL --}}
 
-<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-    <div class="p-6 text-gray-900">
-                <h1 class="text-2xl font-bold mb-4">Dashboard</h1>
-                
-                <div class="bg-green-50 border border-green-100 rounded-lg p-4 mb-6">
-                    <p class="text-green-800">
-                        You are successfully logged in! 
-                        @if(Session::has('user'))
-                            Welcome, <span class="font-bold">{{ Auth::user()->name ?? Session::get('user')['nama'] ?? 'User' }}</span>.
-                        @endif
-                    </p>
+                <div class="mb-8">
+                    <h1 class="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+                    <p class="text-gray-500">Welcome back, <span class="font-semibold text-gray-700">{{ Auth::user()->name ?? Session::get('user')['nama'] ?? 'User' }}</span>!</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Feature Card 1 -->
-                    <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition">
-                        <div class="h-10 w-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Inventory Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-500">Total Inventory</h3>
+                            <div class="p-2 bg-blue-50 rounded-lg text-blue-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                            </div>
                         </div>
-                        <h3 class="text-lg font-semibold mb-2">My Recipes</h3>
-                        <p class="text-gray-600 text-sm">Manage your saved recipes and meal plans.</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $totalInventory }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Items in pantry</p>
                     </div>
 
-                    <!-- Feature Card 2 -->
-                    <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition">
-                        <div class="h-10 w-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    <!-- Expiring Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-500">Expiring Soon</h3>
+                            <div class="p-2 bg-amber-50 rounded-lg text-amber-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
                         </div>
-                        <h3 class="text-lg font-semibold mb-2">Browse Catalog</h3>
-                        <p class="text-gray-600 text-sm">Discover new sustainable meal ideas.</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $totalExpiring }}</p>
+                        <p class="text-xs text-amber-600 mt-1">Items expire in ≤ 7 days</p>
                     </div>
 
-                    <!-- Feature Card 3 -->
-                    <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition">
-                        <div class="h-10 w-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <!-- Shopping List Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-500">To Buy</h3>
+                            <div class="p-2 bg-purple-50 rounded-lg text-purple-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            </div>
                         </div>
-                        <h3 class="text-lg font-semibold mb-2">Profile</h3>
-                        <p class="text-gray-600 text-sm">Update your preferences and settings.</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ $totalShoppingItems }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Est: Rp {{ number_format($totalShoppingCost, 0, ',', '.') }}</p>
+                    </div>
+
+                    <!-- Budget Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-500">Weekly Budget</h3>
+                            <div class="p-2 bg-green-50 rounded-lg text-green-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                        </div>
+                        <p class="text-lg font-bold text-gray-900 truncate">Rp {{ number_format($userBudget - $totalShoppingCost, 0, ',', '.') }}</p>
+                        <p class="text-xs text-{{ ($userBudget - $totalShoppingCost) < 0 ? 'red' : 'green' }}-600 mt-1">Remaining from Rp {{ number_format($userBudget, 0, ',', '.') }}</p>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Expiring Alert (Left Col) -->
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-900">⚠️ Expiring Soon</h3>
+                            <a href="{{ route('inventory') }}" class="text-sm text-green-600 hover:text-green-700 font-medium">View All</a>
+                        </div>
+                        @if(count($expiringItems) > 0)
+                            <div class="space-y-3">
+                                @foreach($expiringItems as $item)
+                                    <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
+                                        <div class="flex items-center">
+                                            <div class="w-2 h-2 rounded-full bg-red-500 mr-3"></div>
+                                            <div>
+                                                <p class="text-sm font-bold text-gray-900">{{ $item['name'] }}</p>
+                                                <p class="text-xs text-red-600">{{ $item['days_left'] }} days left</p>
+                                            </div>
+                                        </div>
+                                        <span class="text-sm font-medium text-gray-600">{{ $item['qty'] }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-center py-8 text-gray-500">
+                                <p>No items expiring soon! 🎉</p>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Recommended Recipe (Right Col) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-900">🍽️ For You</h3>
+                            <a href="{{ route('recipes') }}" class="text-sm text-green-600 hover:text-green-700 font-medium">Browse</a>
+                        </div>
+                        @if(count($recipes) > 0)
+                            <div class="space-y-4">
+                                @foreach(collect($recipes)->take(3) as $recipe)
+                                    <div class="flex items-start space-x-3 pb-3 border-b border-gray-50 last:border-0 last:pb-0">
+                                        <img src="{{ $recipe['image'] }}" class="w-12 h-12 rounded-lg object-cover bg-gray-200" alt="">
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-900 line-clamp-1">{{ $recipe['title'] }}</p>
+                                            <p class="text-xs text-green-600">{{ $recipe['match'] }}% Match</p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-center py-8 text-gray-500">
+                                <p>Add ingredients to get recommendations.</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
     </div>

@@ -23,6 +23,7 @@ Route::middleware('guest')->group(function () {
     Route::put('/inventory/{id}', [PageController::class, 'updateInventory'])->name('inventory.update');
 
     Route::get('/recipes', [PageController::class, 'recipes'])->name('recipes');
+    Route::get('/recipes/{id}/details', [PageController::class, 'getRecipeDetails'])->name('recipes.details');
 
     Route::get('/shopping-list', [PageController::class, 'shoppingList'])->name('shopping.index');
     Route::post('/shopping-list', [PageController::class, 'storeShoppingItem'])->name('shopping.store');
@@ -41,6 +42,12 @@ Route::middleware([EnsureApiTokenIsValid::class])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/inventory', [PageController::class, 'inventory'])->name('inventory');
     Route::post('/inventory/store', [PageController::class, 'storeInventory'])->name('inventory.store');
+    
+
+    Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
+
+    Route::get('/onboarding', [AuthController::class, 'showOnboarding'])->name('onboarding');
+    Route::post('/onboarding', [AuthController::class, 'storePreferences'])->name('onboarding.store');
 });
 
 // Admin Routes

@@ -3,8 +3,12 @@
 @section('content')
 
 
-    <h1 class="text-2xl font-bold text-gray-900 mb-2">Daftar Belanja</h1>
-    <p class="text-gray-500 mb-6">Kelola anggaran dan stok dengan tabel belanja terintegrasi.</p>
+@section('header_search')
+    <div class="flex flex-col justify-center">
+        <h1 class="text-xl font-bold text-gray-900 leading-tight">Daftar Belanja</h1>
+        <p class="text-xs text-gray-500 hidden sm:block">Kelola anggaran dan stok.</p>
+    </div>
+@endsection
 
     <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6">
         <form action="{{ route('shopping.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
@@ -26,14 +30,13 @@
             <div>
                 <label class="block text-xs font-bold text-gray-500 mb-1">Jml (Pcs/Kg)</label>
                 <input type="number" name="jumlah_produk" min="1" value="1" required
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 px-3 py-2 border">
-            </div>
-
             <div>
                 <label class="block text-xs font-bold text-gray-500 mb-1">Estimasi Harga (Rp)</label>
                 <input type="number" name="harga" placeholder="0"
                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 px-3 py-2 border">
             </div>
+
+
 
             <div class="md:col-span-4 flex justify-end mt-2">
                 <button type="submit"

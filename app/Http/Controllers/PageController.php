@@ -14,12 +14,25 @@ class PageController extends Controller
         $this->apiService = $apiService;
     }
 
+    private function getUserId()
+    {
+        $userSession = \Illuminate\Support\Facades\Session::get('user');
+        return is_array($userSession) ? ($userSession['user_id'] ?? null) : ($userSession->user_id ?? null);
+    }
+
     public function inventory()
     {
+        $userId = $this->getUserId();
+
+        if (!$userId) {
+             return redirect()->route('login');
+        }
+
         // 1. Ambil Data Stok Inventory (Join dengan Barang)
         $inventory = \Illuminate\Support\Facades\DB::connection('mysql_api')
             ->table('inventaris_barang')
             ->join('barang', 'inventaris_barang.barang_id', '=', 'barang.barang_id')
+            ->where('inventaris_barang.user_id', $userId)
             ->select('inventaris_barang.*', 'barang.nama_barang', 'barang.kategori', 'barang.satuan', 'barang.gambar')
             ->orderBy('inventaris_barang.tanggal_kadaluarsa', 'asc')
             ->get();
@@ -40,10 +53,17 @@ class PageController extends Controller
 
     public function shoppingList()
     {
+        $userId = $this->getUserId();
+
+        if (!$userId) {
+             return redirect()->route('login');
+        }
+
         // 1. Ambil Daftar Belanja (Join dengan Barang)
         $shoppingList = \Illuminate\Support\Facades\DB::connection('mysql_api')
             ->table('daftar_belanja')
             ->join('barang', 'daftar_belanja.barang_id', '=', 'barang.barang_id')
+            ->where('daftar_belanja.user_id', $userId)
             ->select('daftar_belanja.*', 'barang.nama_barang', 'barang.kategori', 'barang.satuan_standar')
             ->orderBy('daftar_belanja.belanja_id', 'desc')
             ->get();
@@ -63,6 +83,12 @@ class PageController extends Controller
 
     public function storeShoppingItem(Request $request)
     {
+        $userId = $this->getUserId();
+        
+        if (!$userId) {
+             return redirect()->route('login');
+        }
+
         $request->validate([
             'barang_id' => 'required|integer',
             'jumlah_produk' => 'required|integer|min:1',
@@ -74,7 +100,7 @@ class PageController extends Controller
             'jumlah_produk' => $request->jumlah_produk,
             'harga' => $request->harga ?? 0,
             'status_beli' => 0,
-            'user_id' => 1 // Default user
+            'user_id' => $userId
         ]);
 
         return redirect()->back()->with('success', 'Barang ditambahkan ke daftar belanja.');
@@ -82,6 +108,8 @@ class PageController extends Controller
 
     public function updateShoppingItem(Request $request, $id)
     {
+        $userId = $this->getUserId();
+
         $request->validate([
             'jumlah_produk' => 'required|integer|min:1',
             'harga' => 'nullable|numeric'
@@ -90,6 +118,7 @@ class PageController extends Controller
         \Illuminate\Support\Facades\DB::connection('mysql_api')
             ->table('daftar_belanja')
             ->where('belanja_id', $id)
+            ->where('user_id', $userId)
             ->update([
                 'jumlah_produk' => $request->jumlah_produk,
                 'harga' => $request->harga ?? 0
@@ -100,9 +129,12 @@ class PageController extends Controller
 
     public function shoppingDelete($id)
     {
+        $userId = $this->getUserId();
+
         \Illuminate\Support\Facades\DB::connection('mysql_api')
             ->table('daftar_belanja')
             ->where('belanja_id', $id)
+            ->where('user_id', $userId)
             ->delete();
 
         return redirect()->back()->with('success', 'Item dihapus dari daftar belanja.');
@@ -110,9 +142,12 @@ class PageController extends Controller
 
     public function shoppingToggle($id)
     {
+        $userId = $this->getUserId();
+
         $item = \Illuminate\Support\Facades\DB::connection('mysql_api')
             ->table('daftar_belanja')
             ->where('belanja_id', $id)
+            ->where('user_id', $userId)
             ->first();
 
         if ($item) {
@@ -127,6 +162,12 @@ class PageController extends Controller
 
     public function storeInventory(Request $request)
     {
+        $userId = $this->getUserId();
+        
+        if (!$userId) {
+             return redirect()->route('login');
+        }
+
         $request->validate([
             'barang_id' => 'nullable|integer',
             'nama_barang_baru' => 'nullable|string|max:50',
@@ -145,7 +186,7 @@ class PageController extends Controller
             $barangId = \Illuminate\Support\Facades\DB::connection('mysql_api')->table('barang')->insertGetId([
                 'nama_barang' => $request->nama_barang_baru,
                 'kategori' => $request->kategori_baru ?? 'Lainnya',
-                'satuan' => $request->satuan_baru ?? 'pcs',
+                'satuan' => 'hari', // Default shelf life unit
                 'satuan_standar' => $request->satuan_baru ?? 'pcs',
                 'harga' => $request->harga ?? 0,
                 'umur_penyimpanan' => 7 // Default
@@ -157,7 +198,7 @@ class PageController extends Controller
         }
 
         \Illuminate\Support\Facades\DB::connection('mysql_api')->table('inventaris_barang')->insert([
-            'user_id' => 1,
+            'user_id' => $userId,
             'barang_id' => $barangId,
             'jumlah' => $request->jumlah,
             'lokasi_penyimpanan' => $request->lokasi,
@@ -172,9 +213,12 @@ class PageController extends Controller
 
     public function deleteInventory($id)
     {
+        $userId = $this->getUserId();
+
         \Illuminate\Support\Facades\DB::connection('mysql_api')
             ->table('inventaris_barang')
             ->where('inventaris_id', $id)
+            ->where('user_id', $userId)
             ->delete();
 
         return redirect()->back()->with('success', 'Barang dihapus dari stok.');
@@ -182,6 +226,8 @@ class PageController extends Controller
 
     public function updateInventory(Request $request, $id)
     {
+        $userId = $this->getUserId();
+
         // For simple update logic
         $data = [
             'jumlah' => $request->jumlah,
@@ -196,6 +242,7 @@ class PageController extends Controller
         \Illuminate\Support\Facades\DB::connection('mysql_api')
             ->table('inventaris_barang')
             ->where('inventaris_id', $id)
+            ->where('user_id', $userId)
             ->update($data);
 
         return redirect()->back()->with('success', 'Data inventaris diperbarui.');
@@ -255,6 +302,29 @@ class PageController extends Controller
         }
 
         return view('favorite-recipes', compact('favorites'));
+    }
+
+    public function getRecipeDetails($id)
+    {
+        $recipe = \Illuminate\Support\Facades\DB::connection('mysql_api')
+            ->table('resep')
+            ->where('resep_id', $id)
+            ->first();
+
+        if (!$recipe) {
+            return response()->json(['status' => 'error', 'message' => 'Recipe not found'], 404);
+        }
+
+        $ingredients = \Illuminate\Support\Facades\DB::connection('mysql_api')
+            ->table('detail_resep_bahan')
+            ->where('resep_id', $id)
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'recipe' => $recipe,
+            'ingredients' => $ingredients
+        ]);
     }
 
     public function finance()

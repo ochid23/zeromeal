@@ -98,16 +98,7 @@
                         Favorite Recipe
                     </a>
 
-                    <!-- Meal Planning -->
-                    <a href="#"
-                        class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        <svg class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Meal Plan
-                    </a>
+
 
                     <!-- Finance -->
                     <a href="{{ route('finance') }}" class="{{ request()->routeIs('finance') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
@@ -119,41 +110,42 @@
                         Finance
                     </a>
 
-                    <!-- Settings -->
-                    <a href="#"
-                        class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md mt-6">
-                        <svg class="text-gray-400 group-hover:text-gray-500 mr-3 flex-shrink-0 h-6 w-6" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Settings
-                    </a>
+
+
                 </nav>
             </div>
             <div class="flex flex-shrink-0 border-t border-gray-200 p-4">
                 <div class="group block w-full flex-shrink-0">
                     <div class="flex items-center">
-                        <div>
+                <div class="w-full group block flex-shrink-0 text-left focus:outline-none">
+                    <div class="flex items-center">
+                        <div class="cursor-pointer" onclick="openProfileModal()">
                             <!-- User Initials Avatar as placeholder -->
                             <div
-                                class="h-9 w-9 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
-                                {{ substr(Auth::user()->name ?? Session::get('user')['nama'] ?? 'U', 0, 1) }}
+                                class="h-9 w-9 rounded-full bg-green-500 flex items-center justify-center text-white font-bold group-hover:ring-2 group-hover:ring-green-300 transition-all">
+                                {{ substr(Auth::user()->nama ?? Session::get('user')['nama'] ?? 'U', 0, 1) }}
                             </div>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                                {{ Auth::user()->name ?? Session::get('user')['nama'] ?? 'User' }}</p>
-
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit"
-                                    class="text-xs font-medium text-gray-500 group-hover:text-gray-700 hover:underline">Log
-                                    Out</button>
-                            </form>
+                            <p class="text-sm font-medium text-gray-700 group-hover:text-green-700 transition-colors cursor-pointer" onclick="openProfileModal()">
+                                {{ Auth::user()->nama ?? Session::get('user')['nama'] ?? 'User' }}
+                            </p>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <button onclick="openProfileModal()" class="text-xs text-gray-500 hover:text-green-600 transition-colors focus:outline-none">
+                                    Edit Profile
+                                </button>
+                                <span class="text-gray-300 text-xs">|</span>
+                                <form method="POST" action="{{ route('logout') }}" class="inline">
+                                    @csrf
+                                    <button type="submit"
+                                        class="text-xs font-medium text-red-400 hover:text-red-600 transition-colors focus:outline-none whitespace-nowrap">
+                                        Log Out
+                                    </button>
+                                </form>
+                            </div>
                         </div>
+                    </div>
+                </div>
                     </div>
                 </div>
             </div>
@@ -166,10 +158,8 @@
             <!-- Topbar inside main content area -->
             <div class="sticky top-0 z-10 flex h-16 flex-shrink-0 bg-white shadow-sm">
                 <div class="flex flex-1 justify-between px-4 sm:px-6 lg:px-8">
-                    <div class="flex flex-1">
-                        <div class="flex flex-1 items-center px-4">
-                            @yield('header_search')
-                        </div>
+                    <div class="flex flex-1 items-center">
+                        @yield('header_search')
                     </div>
                     <div class="ml-4 flex items-center md:ml-6">
                         <button type="button"
@@ -190,7 +180,79 @@
             </div>
         </main>
     </div>
+
     @stack('scripts')
+    
+    <!-- Profile Edit Modal -->
+    <div id="profileModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity" onclick="closeProfileModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="relative inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                <form action="{{ route('profile.update') }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Edit Profile</h3>
+                                <div class="mt-4 space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Name</label>
+                                        <input type="text" name="nama" value="{{ Auth::user()->nama ?? Session::get('user')['nama'] ?? '' }}" required
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm px-3 py-2">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                                        <input type="email" name="email" value="{{ Auth::user()->email ?? Session::get('user')['email'] ?? '' }}" required
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm px-3 py-2">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">New Password <span class="text-gray-400 font-normal">(Optional)</span></label>
+                                        <input type="password" name="password" placeholder="Leave empty to keep current"
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm px-3 py-2">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Current Password <span class="text-gray-400 font-normal">(Required to change password)</span></label>
+                                        <input type="password" name="current_password"
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm px-3 py-2">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                                        <input type="password" name="password_confirmation"
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm px-3 py-2">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Save Changes
+                        </button>
+                        <button type="button" onclick="closeProfileModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openProfileModal() {
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+    </script>
 </body>
 
 </html>
