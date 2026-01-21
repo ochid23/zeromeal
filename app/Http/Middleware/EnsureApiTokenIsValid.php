@@ -16,10 +16,14 @@ class EnsureApiTokenIsValid
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Session::has('api_token')) {
-            return redirect()->route('login')->with('error', 'Please login to access this page.');
+        try {
+            if (!Session::has('api_token')) {
+                return redirect()->route('login')->with('error', 'Please login to access this page.');
+            }
+    
+            return $next($request);
+        } catch (\Exception $e) {
+            dd('MIDDLEWARE ERROR:', $e->getMessage(), $e->getTraceAsString());
         }
-
-        return $next($request);
     }
 }
