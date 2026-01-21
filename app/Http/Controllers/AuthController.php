@@ -88,8 +88,9 @@ class AuthController extends Controller
 
         // Call API to update user
         // Call API to update user
-        // Endpoint: /magic-save (No /api prefix) - BYPASS FIX
-        $response = $this->apiService->get("/magic-save", [
+        // Endpoint: /magic-save (Full URL to bypass API prefix logic)
+        // url('/magic-save') generates http://domain/magic-save
+        $response = $this->apiService->getUrl(url('/magic-save'), [
             'preferensi' => $preferences
         ]);
 
@@ -195,7 +196,7 @@ class AuthController extends Controller
         }
 
         // Call API
-        $response = $this->apiService->get("/magic-save", $data);
+        $response = $this->apiService->getUrl(url('/magic-save'), $data);
 
         if ($response->successful()) {
              $responseData = $response->json();

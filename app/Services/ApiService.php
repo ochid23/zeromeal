@@ -122,4 +122,14 @@ class ApiService
         return Http::withHeaders($this->getHeaders())
             ->delete($this->baseUrl . $endpoint, $data);
     }
+
+    /**
+     * Request specific URL ignoring base_url
+     * @return Response
+     */
+    public function getUrl($fullUrl, $params = [])
+    {
+        return Http::withHeaders($this->getHeaders())
+            ->get($fullUrl, $params);
+    }
 }
