@@ -114,10 +114,16 @@ class AuthController extends Controller
 
         if (!$user) {
              // Debug info to see what's happening
+             $tokenId = $request->bearerToken() ? explode('|', $request->bearerToken())[0] : null;
+             $tokenRecord = $tokenId ? \Laravel\Sanctum\PersonalAccessToken::find($tokenId) : null;
+
              return response()->json([
                  'message' => 'Unauthenticated (Manual Check Failed)',
                  'debug_header' => $request->header('Authorization'),
-                 'debug_token_exists' => $request->bearerToken() ? 'yes' : 'no'
+                 'debug_token_exists' => $request->bearerToken() ? 'yes' : 'no',
+                 'debug_token_id_parsed' => $tokenId,
+                 'debug_token_record_found' => $tokenRecord ? 'yes' : 'no',
+                 'debug_token_record_revoked' => ($tokenRecord && $tokenRecord->last_used_at) ? $tokenRecord->last_used_at : 'never used',
              ], 401);
         }
 
