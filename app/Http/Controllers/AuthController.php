@@ -111,7 +111,7 @@ class AuthController extends Controller
         \Illuminate\Support\Facades\Log::error('Onboarding API Error', ['status' => $response->status(), 'body' => $response->body()]);
         
         // DEBUG: Force user to see the error (Restored for debugging)
-        dd('API ERROR ONBOARDING:', $response->status(), $response->body());
+        dd('STATUS DEPLOYMENT BARU:', $response->status(), $response->body());
 
         return back()->with('error', 'Gagal menyimpan preferensi. Silakan coba lagi.');
     }
