@@ -86,43 +86,33 @@ class AuthController extends Controller
 
         $preferences = json_encode($request->only('source', 'goal', 'cooking_frequency'));
 
-        // REVERTED TO API CALL AS REQUESTED
-        // Endpoint: /magic-save (Full URL to bypass API prefix logic)
-        $response = $this->apiService->getUrl(url('/magic-save'), [
-            'preferensi' => $preferences
-        ]);
+        // DIRECT UPDATE: Bypass API loopback to avoid token loss/401 loops
+        // Kembali ke metode langsung agar tidak tergantung HTTP Call yang rentan error di hosting
+        $user = User::query()->where('user_id', $userId)->first();
 
-        if ($response->status() === 401) {
-            // Token expired or invalid (common after deployment/APP_KEY rotation)
-            Session::forget('api_token');
-            Session::forget('user');
-            return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir. Silakan login kembali untuk melanjutkan.');
-        }
+        if ($user) {
+            $preferences = json_encode($request->only('source', 'goal', 'cooking_frequency'));
+            $user->preferensi = $preferences;
+            
+            // Allow manual override of timestamps since model has them disabled
+             if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'updated_at')) {
+                // $user->updated_at = now(); 
+            }
+            
+            $user->save();
 
-        if ($response->successful()) {
-            // Update session user
-            $updatedUser = $response->json()['data'] ?? $userSession;
-             
-            // If response is just success status but not full user, merge manually
+            // Update session
             if (is_array($userSession)) {
                 $userSession['preferensi'] = $preferences;
             } else {
                 $userSession->preferensi = $preferences;
             }
-            // Use updated user from API if available and looks like a user object
-            if (isset($updatedUser['user_id'])) {
-                 Session::put('user', $updatedUser);
-            } else {
-                 Session::put('user', $userSession);
-            }
+            Session::put('user', $userSession);
 
             return redirect()->route('dashboard');
         }
-        
-        // Log error if needed but graceful fail
-        \Illuminate\Support\Facades\Log::error('Onboarding API Error', ['status' => $response->status(), 'body' => $response->body()]);
-        
-        // DEBUG: Force user to see the error (Restored for debugging)
+
+        return back()->with('error', 'User tidak ditemukan di database.');
         dd('STATUS DEPLOYMENT BARU:', $response->status(), $response->body());
 
         return back()->with('error', 'Gagal menyimpan preferensi. Silakan coba lagi.');
