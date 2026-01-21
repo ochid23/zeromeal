@@ -249,98 +249,88 @@ class AuthController extends Controller
             return redirect()->route('login')->with('error', 'Sesi kadaluarsa, silakan login kembali.');
         }
 
-        // --- GANTIKAN API CALL /dashboard-data DENGAN DIRECT QUERY ---
-        
-        // 1. Ambil Barang Hampir Kadaluarsa
-        $expiringItems = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('vw_inventaris_status')
-            ->where('user_id', $userId)
-            ->where('hari_tersisa', '<=', 7)
-            ->orderBy('hari_tersisa', 'asc')
-            ->select('nama_barang as name', 'hari_tersisa as days_left', \Illuminate\Support\Facades\DB::raw("CONCAT(jumlah, ' ', satuan) as qty"))
-            ->limit(5)
-            ->get();
-        // Convert to array
-        $expiringItems = json_decode(json_encode($expiringItems), true);
+        try {
+            // --- GANTIKAN API CALL /dashboard-data DENGAN DIRECT QUERY ---
+            
+            // 1. Ambil Barang Hampir Kadaluarsa
+            $expiringItems = \Illuminate\Support\Facades\DB::connection('mysql_api')
+                ->table('vw_inventaris_status')
+                ->where('user_id', $userId)
+                ->where('hari_tersisa', '<=', 7)
+                ->orderBy('hari_tersisa', 'asc')
+                ->select('nama_barang as name', 'hari_tersisa as days_left', \Illuminate\Support\Facades\DB::raw("CONCAT(jumlah, ' ', satuan) as qty"))
+                ->limit(5)
+                ->get();
+            // Convert to array
+            $expiringItems = json_decode(json_encode($expiringItems), true);
 
-        // 2. Ambil Daftar Belanja
-        $shoppingList = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('daftar_belanja')
-            ->join('barang', 'daftar_belanja.barang_id', '=', 'barang.barang_id')
-            ->where('daftar_belanja.user_id', $userId)
-            ->select('barang.nama_barang as name', \Illuminate\Support\Facades\DB::raw("CONCAT(daftar_belanja.jumlah_produk, ' ', barang.satuan_standar) as qty"), 'daftar_belanja.status_beli as checked')
-            ->get()
-            ->map(function($item) {
-                // Convert checked status same as API
-                $item->checked = $item->checked == 1; 
-                return $item;
-            });
-        $shoppingList = json_decode(json_encode($shoppingList), true);
+            // 2. Ambil Daftar Belanja
+            $shoppingList = \Illuminate\Support\Facades\DB::connection('mysql_api')
+                ->table('daftar_belanja')
+                ->join('barang', 'daftar_belanja.barang_id', '=', 'barang.barang_id')
+                ->where('daftar_belanja.user_id', $userId)
+                ->select('barang.nama_barang as name', \Illuminate\Support\Facades\DB::raw("CONCAT(daftar_belanja.jumlah_produk, ' ', barang.satuan_standar) as qty"), 'daftar_belanja.status_beli as checked')
+                ->get()
+                ->map(function($item) {
+                    // Convert checked status same as API
+                    $item->checked = $item->checked == 1; 
+                    return $item;
+                });
+            $shoppingList = json_decode(json_encode($shoppingList), true);
 
-        // 3. Ambil Rekomendasi Resep
-        $recipes = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('vw_resep_rekomendasi')
-            ->where('user_id', $userId)
-            ->select('judul as title', 'persentase_kecocokan as match', 'image_url as image', 'deskripsi')
-            ->orderByDesc('persentase_kecocokan')
-            ->limit(4)
-            ->get()
-            ->map(function($recipe) {
-                $recipe->time = rand(15, 45) . ' min';
-                if (!str_contains($recipe->image, 'http')) {
-                    $recipe->image = 'https://source.unsplash.com/500x300/?food,' . urlencode($recipe->title); 
-                }
-                return $recipe;
-            });
-        $recipes = json_decode(json_encode($recipes), true);
+            // 3. Ambil Rekomendasi Resep
+            $recipes = \Illuminate\Support\Facades\DB::connection('mysql_api')
+                ->table('vw_resep_rekomendasi')
+                ->where('user_id', $userId)
+                ->select('judul as title', 'persentase_kecocokan as match', 'image_url as image', 'deskripsi')
+                ->orderByDesc('persentase_kecocokan')
+                ->limit(4)
+                ->get()
+                ->map(function($recipe) {
+                    $recipe->time = rand(15, 45) . ' min';
+                    if (!str_contains($recipe->image, 'http')) {
+                        $recipe->image = 'https://source.unsplash.com/500x300/?food,' . urlencode($recipe->title); 
+                    }
+                    return $recipe;
+                });
+            $recipes = json_decode(json_encode($recipes), true);
 
-        // --- GANTIKAN API CALL /inventory (Check Empty) ---
-        $inventoryCount = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('vw_inventaris_status')
-            ->where('user_id', $userId)
-            ->count();
-        
-        $isEmptyInventory = $inventoryCount === 0;
+            // --- GANTIKAN API CALL /inventory (Check Empty) ---
+            $inventoryCount = \Illuminate\Support\Facades\DB::connection('mysql_api')
+                ->table('vw_inventaris_status')
+                ->where('user_id', $userId)
+                ->count();
+            
+            $isEmptyInventory = $inventoryCount === 0;
 
-        // --- DASHBOARD SUMMARY METRICS ---
-        $totalInventory = $inventoryCount;
-        
-        $totalExpiring = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('vw_inventaris_status')
-            ->where('user_id', $userId)
-            ->where('hari_tersisa', '<=', 7)
-            ->count();
+            // --- DASHBOARD SUMMARY METRICS ---
+            $totalInventory = $inventoryCount;
+            
+            $totalExpiring = \Illuminate\Support\Facades\DB::connection('mysql_api')
+                ->table('vw_inventaris_status')
+                ->where('user_id', $userId)
+                ->where('hari_tersisa', '<=', 7)
+                ->count();
 
-        $shoppingListCollection = collect($shoppingList);
-        $totalShoppingItems = $shoppingListCollection->count();
-        // Assuming price is total or unit price? Database table has 'harga' and 'jumlah_produk'.
-        // Step 45 migration says: decimal('harga', 10, 2).
-        // Let's assume 'harga' is unit price.
-        // Wait, the $shoppingList query in step 39 joins 'barang' but selects everything.
-        // 'daftar_belanja' also has 'harga'.
-        // Let's calculate based on what we have.
-        // In Step 39: $shoppingList select raw CONCAT... qty.
-        // Wait, Step 39 code for shoppingList was:
-        /*
-          $shoppingList = ... select('barang.nama_barang as name', \DB::raw("CONCAT(daftar_belanja.jumlah_produk, ' ', barang.satuan_standar) as qty"), 'daftar_belanja.status_beli as checked')
-        */
-        // This query in Step 39 DOES NOT return 'harga' or 'jumlah_produk' as numbers suitable for calculation! It returns formatted strings.
-        // I need to change the shopping list query to get raw numbers first, then format them, OR create a separate summary query.
-        // Creating a clean separate summary calculation is safer to avoid breaking the view which expects specific format.
-        
-        // Actually, let's just re-query for the summary stats to be safe and accurate.
-        $shoppingStats = \Illuminate\Support\Facades\DB::connection('mysql_api')
-            ->table('daftar_belanja')
-            ->where('user_id', $userId)
-            ->select(\Illuminate\Support\Facades\DB::raw('SUM(harga * jumlah_produk) as total_cost'), \Illuminate\Support\Facades\DB::raw('COUNT(*) as total_items'))
-            ->first();
+            $shoppingListCollection = collect($shoppingList);
+            $totalShoppingItems = $shoppingListCollection->count();
+            
+            $shoppingStats = \Illuminate\Support\Facades\DB::connection('mysql_api')
+                ->table('daftar_belanja')
+                ->where('user_id', $userId)
+                ->select(\Illuminate\Support\Facades\DB::raw('SUM(harga * jumlah_produk) as total_cost'), \Illuminate\Support\Facades\DB::raw('COUNT(*) as total_items'))
+                ->first();
 
-        $totalShoppingCost = $shoppingStats->total_cost ?? 0;
-        $totalShoppingItems = $shoppingStats->total_items ?? 0;
+            $totalShoppingCost = $shoppingStats->total_cost ?? 0;
+            $totalShoppingItems = $shoppingStats->total_items ?? 0;
 
-        $userBudget = \App\Models\User::find($userId)->budget ?? 0;
+            $userBudget = \App\Models\User::find($userId)->budget ?? 0;
 
-        return view('dashboard', compact('expiringItems', 'shoppingList', 'recipes', 'isEmptyInventory', 
-            'totalInventory', 'totalExpiring', 'totalShoppingItems', 'totalShoppingCost', 'userBudget'));
+            return view('dashboard', compact('expiringItems', 'shoppingList', 'recipes', 'isEmptyInventory', 
+                'totalInventory', 'totalExpiring', 'totalShoppingItems', 'totalShoppingCost', 'userBudget'));
+
+        } catch (\Exception $e) {
+            dd('DASHBOARD ERROR:', $e->getMessage(), $e->getTraceAsString());
+        }
     }
 }
