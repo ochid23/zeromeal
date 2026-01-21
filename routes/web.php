@@ -9,14 +9,6 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-// NUCLEAR OPTION: Manually register API route in web.php to bypass api.php/prefix issues
-// This ensures domain.com/api/save-preferences IS registered no matter what.
-Route::any('/api/save-preferences', [App\Http\Controllers\Api\AuthController::class, 'update']);
-// MAGIC ROUTE: No /api prefix, pure web route disguised as API. 
-// If this works, the /api path is the problem.
-// MUST use manual auth check in controller because middleware behaves oddly on web routes
-Route::any('/magic-save', [App\Http\Controllers\Api\AuthController::class, 'update']);
-
 // Guest Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');

@@ -79,43 +79,49 @@ class AuthController extends Controller
         ]);
 
         $userSession = Session::get('user');
-        // Handle object or array
         $userId = is_array($userSession) ? ($userSession['user_id'] ?? null) : ($userSession->user_id ?? null);
         
         if (!$userId) return redirect()->route('login');
 
         $preferences = json_encode($request->only('source', 'goal', 'cooking_frequency'));
 
-        // DIRECT UPDATE: Bypass API loopback to avoid token loss/401 loops
-        // Kembali ke metode langsung agar tidak tergantung HTTP Call yang rentan error di hosting
-        $user = User::query()->where('user_id', $userId)->first();
+        // Use API Service to update profile (which now includes preferences)
+        // We need to send existing name/email/phone as well or API might complain if they are required?
+        // API 'updateProfile' validates name/email as required.
+        // So we must fetch current user data from session or object to send along.
+        
+        $userName = is_array($userSession) ? ($userSession['nama'] ?? '') : ($userSession->nama ?? '');
+        $userEmail = is_array($userSession) ? ($userSession['email'] ?? '') : ($userSession->email ?? '');
+        $userPhone = is_array($userSession) ? ($userSession['no_telepon'] ?? '') : ($userSession->no_telepon ?? '');
 
-        if ($user) {
-            $preferences = json_encode($request->only('source', 'goal', 'cooking_frequency'));
-            $user->preferensi = $preferences;
-            
-            // Allow manual override of timestamps since model has them disabled
-             if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'updated_at')) {
-                // $user->updated_at = now(); 
-            }
-            
-            $user->save();
+        $data = [
+            'nama' => $userName,
+            'email' => $userEmail,
+            'no_telepon' => $userPhone,
+            'preferensi' => $preferences
+        ];
 
-            // Update session
-            if (is_array($userSession)) {
-                $userSession['preferensi'] = $preferences;
+        $response = $this->apiService->post('/user/update-profile', $data);
+
+        if ($response->successful()) {
+            // Update session user from response
+            $updatedUser = $response->json()['data'] ?? null;
+            if ($updatedUser) {
+                Session::put('user', $updatedUser);
             } else {
-                $userSession->preferensi = $preferences;
+                // Fallback local update
+                 if (is_array($userSession)) {
+                    $userSession['preferensi'] = $preferences;
+                } else {
+                    $userSession->preferensi = $preferences;
+                }
+                Session::put('user', $userSession);
             }
-            Session::put('user', $userSession);
 
             return redirect()->route('dashboard');
         }
 
-        return back()->with('error', 'User tidak ditemukan di database.');
-        dd('STATUS DEPLOYMENT BARU:', $response->status(), $response->body());
-
-        return back()->with('error', 'Gagal menyimpan preferensi. Silakan coba lagi.');
+        return back()->with('error', 'Gagal menyimpan preferensi. ' . ($response->json()['message'] ?? 'API Error'));
     }
 
     public function showRegisterForm()
@@ -180,39 +186,48 @@ class AuthController extends Controller
 
         $request->validate($rules);
         
-        $data = [
-            'nama' => $request->nama,
-            'email' => $request->email,
-        ];
-        
+        // 1. Handle Password Change (if requested)
         if ($request->filled('password')) {
-            $data['password'] = $request->password;
-            $data['current_password'] = $request->current_password;
+            $passData = [
+                'password_lama' => $request->current_password,
+                'password_baru' => $request->password,
+                'password_baru_confirmation' => $request->password_confirmation
+            ];
+            
+            $passResponse = $this->apiService->post('/user/change-password', $passData);
+            
+            if (!$passResponse->successful()) {
+                // Return error specifically for password
+                return back()->withErrors(['current_password' => $passResponse->json()['message'] ?? 'Gagal mengubah password.']);
+            }
         }
 
-        // Call API
-        $response = $this->apiService->getUrl(url('/magic-save'), $data);
+        // 2. Handle Profile Update (Name, Email)
+        // We also need to preserve existing phone/preferences if they are not in the form but required/part of profile
+        // Usually updateProfile API validates name/email.
+        $userPhone = is_array($userSession) ? ($userSession['no_telepon'] ?? '') : ($userSession->no_telepon ?? '');
+        // Keep existing preference
+        $userPref = is_array($userSession) ? ($userSession['preferensi'] ?? null) : ($userSession->preferensi ?? null);
+
+        $profileData = [
+            'nama' => $request->nama,
+            'email' => $request->email,
+            'no_telepon' => $userPhone,
+            'preferensi' => $userPref 
+        ];
+
+        $response = $this->apiService->post('/user/update-profile', $profileData);
 
         if ($response->successful()) {
-             $responseData = $response->json();
-             // Update Session
-             $updatedUser = $responseData['data'] ?? $responseData['user'] ?? null;
-             
-             if ($updatedUser) {
-                 Session::put('user', $updatedUser);
-             } else {
-                 // Fallback update session manually if API doesn't return user
-                 if (is_array($userSession)) {
-                     $userSession['nama'] = $request->nama;
-                     $userSession['email'] = $request->email;
-                 } else {
-                     $userSession->nama = $request->nama;
-                     $userSession->email = $request->email;
-                 }
-                 Session::put('user', $userSession);
-             }
+            $responseData = $response->json();
+            // Update Session
+            $updatedUser = $responseData['data'] ?? $responseData['user'] ?? null;
+            
+            if ($updatedUser) {
+                Session::put('user', $updatedUser);
+            }
 
-             return back()->with('success', 'Profil berhasil diperbarui!');
+            return back()->with('success', 'Profil berhasil diperbarui!');
         }
 
         $errorMsg = $response->json()['message'] ?? 'Gagal memperbarui profil.';
