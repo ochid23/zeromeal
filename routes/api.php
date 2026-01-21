@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+    Route::put('/user', [AuthController::class, 'update']); // Added for profile/onboarding updates
 Route::get('/shopping-list', [ShoppingListController::class, 'index']);
 Route::post('/shopping-list', [ShoppingListController::class, 'store']);
 Route::put('/shopping-list/{id}/toggle', [ShoppingListController::class, 'toggle']);

@@ -81,9 +81,8 @@ class AuthController extends Controller
         $preferences = json_encode($request->only('source', 'goal', 'cooking_frequency'));
 
         // Call API to update user
-        // Assuming endpoint /users/{id} or /profile
-        // Let's try /users/{id} standard convention
-        $response = $this->apiService->put("/users/{$userId}", [
+        // Endpoint: PUT /user (Authenticated user)
+        $response = $this->apiService->put("/user", [
             'preferensi' => $preferences
         ]);
 
@@ -106,6 +105,9 @@ class AuthController extends Controller
 
             return redirect()->route('dashboard');
         }
+        
+        // Log error if needed but graceful fail
+        \Illuminate\Support\Facades\Log::error('Onboarding API Error', ['status' => $response->status(), 'body' => $response->body()]);
 
         return back()->with('error', 'Gagal menyimpan preferensi. Silakan coba lagi.');
     }
@@ -183,7 +185,7 @@ class AuthController extends Controller
         }
 
         // Call API
-        $response = $this->apiService->put("/users/{$userId}", $data);
+        $response = $this->apiService->put("/user", $data);
 
         if ($response->successful()) {
              $responseData = $response->json();

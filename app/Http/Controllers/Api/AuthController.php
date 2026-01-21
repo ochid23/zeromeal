@@ -90,4 +90,51 @@ class AuthController extends Controller
             'message' => 'Logged out successfully'
         ]);
     }
+
+    public function update(Request $request)
+    {
+        $user = $request->user();
+
+        // Validasi
+        $validator = Validator::make($request->all(), [
+            'nama' => 'sometimes|string|max:100',
+            'email' => 'sometimes|email|max:50|unique:users,email,'.$user->user_id .',user_id', // Ignore current user for unique check
+            'password' => 'sometimes|confirmed|min:8',
+            'current_password' => 'required_with:password',
+            'preferensi' => 'sometimes|string', // JSON string for preferences
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Update Password if provided
+        if ($request->filled('password')) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                 return response()->json([
+                    'success' => false,
+                    'message' => 'Password lama salah.'
+                ], 400);
+            }
+            $user->password = Hash::make($request->password);
+        }
+
+        // Update other fields
+        if ($request->has('nama')) $user->nama = $request->nama;
+        if ($request->has('email')) $user->email = $request->email;
+        if ($request->has('preferensi')) $user->preferensi = $request->preferensi;
+        if ($request->has('no_telepon')) $user->no_telepon = $request->no_telepon;
+
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => $user
+        ]);
+    }
 }
