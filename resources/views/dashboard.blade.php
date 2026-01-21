@@ -284,7 +284,7 @@
 
                 <div class="mb-8">
                     <h1 class="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-                    <p class="text-gray-500">Welcome back, <span class="font-semibold text-gray-700">{{ Auth::user()->name ?? Session::get('user')['nama'] ?? 'User' }}</span>!</p>
+                    <p class="text-gray-500">Welcome back, <span class="font-semibold text-gray-700">{{ Auth::user()->name ?? data_get(Session::get('user'), 'nama') ?? 'User' }}</span>!</p>
                 </div>
 
                 <!-- Summary Cards -->
