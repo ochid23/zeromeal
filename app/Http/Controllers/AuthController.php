@@ -71,12 +71,32 @@ class AuthController extends Controller
             \Illuminate\Support\Facades\Log::error('Admin Direct DB Login Error: ' . $e->getMessage());
         }
 
-        $debugMsg = 'Email atau password salah.';
+        // DEBUGGING LOGIC START
+        $debugMsg = 'Login Gagal.';
+        
+        // Cek User
         if ($user) {
-            $debugMsg .= ' (User Found, Hash Check Failed. DB Pass: ' . substr($user->password, 0, 10) . '...)';
+             // User Ketemu, tapi Hash salah
+             $debugMsg .= ' [User: Found, Pass Hash Mismatch]';
         } else {
-            $debugMsg .= ' (User Not Found)';
+             $debugMsg .= ' [User: Not Found]';
         }
+
+        // Cek Admin (Manual check for debug)
+        $adminDebug = \Illuminate\Support\Facades\DB::connection('mysql_api')
+                ->table('admin')
+                ->where('email', $request->email)
+                ->first();
+        
+        if ($adminDebug) {
+             // Admin Ketemu
+             if ($adminDebug->password !== $request->password) {
+                 $debugMsg .= ' [Admin: Found, Plain Pass Mismatch]';
+             }
+        } else {
+             $debugMsg .= ' [Admin: Not Found]';
+        }
+        // DEBUGGING LOGIC END
 
         return back()->withErrors([
             'email' => $debugMsg,
