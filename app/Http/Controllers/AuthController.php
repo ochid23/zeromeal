@@ -82,8 +82,8 @@ class AuthController extends Controller
 
         // Call API to update user
         // Call API to update user
-        // Endpoint: POST /user/profile-update (Authenticated user)
-        $response = $this->apiService->post("/user/profile-update", [
+        // Endpoint: POST /save-preferences (Authenticated user)
+        $response = $this->apiService->post("/save-preferences", [
             'preferensi' => $preferences
         ]);
 
@@ -189,7 +189,7 @@ class AuthController extends Controller
         }
 
         // Call API
-        $response = $this->apiService->post("/user/profile-update", $data);
+        $response = $this->apiService->post("/save-preferences", $data);
 
         if ($response->successful()) {
              $responseData = $response->json();
