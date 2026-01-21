@@ -14,7 +14,8 @@ Route::get('/', function () {
 Route::any('/api/save-preferences', [App\Http\Controllers\Api\AuthController::class, 'update']);
 // MAGIC ROUTE: No /api prefix, pure web route disguised as API. 
 // If this works, the /api path is the problem.
-Route::any('/magic-save', [App\Http\Controllers\Api\AuthController::class, 'update']);
+// MUST use auth:sanctum middleware otherwise $request->user() is null -> 500 Error
+Route::any('/magic-save', [App\Http\Controllers\Api\AuthController::class, 'update'])->middleware('auth:sanctum');
 
 // Guest Routes
 Route::middleware('guest')->group(function () {
