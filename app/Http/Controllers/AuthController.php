@@ -57,7 +57,11 @@ class AuthController extends Controller
 
     public function showOnboarding()
     {
-        return view('onboarding');
+        try {
+            return view('onboarding');
+        } catch (\Exception $e) {
+            dd('ONBOARDING ERROR:', $e->getMessage(), $e->getTraceAsString());
+        }
     }
 
     public function storePreferences(Request $request)
