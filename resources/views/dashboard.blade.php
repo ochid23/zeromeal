@@ -9,63 +9,10 @@
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             <div class="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl w-full">
                 
-                {{-- STEP 1: Survey --}}
-                <div id="step1" class="p-8 sm:p-12">
-                    <div class="text-center mb-10">
-                        <h3 class="text-3xl font-bold text-gray-900 mb-4">Dari mana kamu tahu tentang ZeroMeal?</h3>
-                        <p class="text-lg text-gray-500">Pilih salah satu opsi di bawah ini.</p>
-                    </div>
-                        
-                    <input type="hidden" id="sourceSelect" value="">
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
-                        <!-- Option 1: Social Media -->
-                        <div onclick="selectOption('social_media', this)" class="survey-card cursor-pointer relative bg-white border-2 border-gray-100 rounded-2xl p-8 hover:shadow-lg transition-all duration-300 flex flex-col items-center justify-center text-center h-64 group">
-                            <div class="absolute top-4 right-4 w-6 h-6 bg-green-600 rounded-full text-white flex items-center justify-center opacity-0 check-icon transition-opacity">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                            </div>
-                            <div class="w-16 h-16 mb-6 text-green-600 bg-green-50 rounded-full flex items-center justify-center group-hover:bg-green-100 transition-colors">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg>
-                            </div>
-                            <span class="text-lg font-semibold text-gray-900 mb-1">Social Media</span>
-                            <span class="text-sm text-gray-500">IG, TikTok, FB</span>
-                        </div>
-
-                        <!-- Option 2: Search Engine -->
-                        <div onclick="selectOption('search', this)" class="survey-card cursor-pointer relative bg-white border-2 border-gray-100 rounded-2xl p-8 hover:shadow-lg transition-all duration-300 flex flex-col items-center justify-center text-center h-64 group">
-                            <div class="absolute top-4 right-4 w-6 h-6 bg-green-600 rounded-full text-white flex items-center justify-center opacity-0 check-icon transition-opacity">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                            </div>
-                            <div class="w-16 h-16 mb-6 text-green-600 bg-green-50 rounded-full flex items-center justify-center group-hover:bg-green-100 transition-colors">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            </div>
-                            <span class="text-lg font-semibold text-gray-900 mb-1">Search Engine</span>
-                            <span class="text-sm text-gray-500">Google, Bing</span>
-                        </div>
-
-                        <!-- Option 3: Friends -->
-                        <div onclick="selectOption('friend', this)" class="survey-card cursor-pointer relative bg-white border-2 border-gray-100 rounded-2xl p-8 hover:shadow-lg transition-all duration-300 flex flex-col items-center justify-center text-center h-64 group">
-                            <div class="absolute top-4 right-4 w-6 h-6 bg-green-600 rounded-full text-white flex items-center justify-center opacity-0 check-icon transition-opacity">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                            </div>
-                            <div class="w-16 h-16 mb-6 text-green-600 bg-green-50 rounded-full flex items-center justify-center group-hover:bg-green-100 transition-colors">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                            </div>
-                            <span class="text-lg font-semibold text-gray-900 mb-1">Teman / Keluarga</span>
-                            <span class="text-sm text-gray-500">Rekomendasi</span>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end items-center pt-4">
-                        <button onclick="goToStep(2)" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg text-base font-bold transition-all shadow-lg hover:shadow-xl flex items-center transform hover:-translate-y-0.5">
-                            Continue
-                            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                        </button>
-                    </div>
-                </div>
+                {{-- REMOVED STEP 1: Survey (Already done in Onboarding page) --}}
 
                 {{-- STEP 2: Ask to Add Item --}}
-                <div id="step2" class="hidden p-8 sm:p-12">
+                <div id="step2" class="p-8 sm:p-12">
                     <div class="text-center h-full flex flex-col justify-center items-center py-10">
                         <div class="w-24 h-24 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-8 animate-bounce">
                             <span class="text-4xl">📦</span>
@@ -82,9 +29,7 @@
                                 Tidak, Nanti Saja
                             </button>
                         </div>
-                         <button onclick="goToStep(1)" class="mt-8 text-gray-400 hover:text-gray-600 font-medium">
-                            &larr; Kembali
-                        </button>
+                         {{-- Back button removed since Step 1 is gone --}}
                     </div>
                 </div>
 

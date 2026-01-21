@@ -110,8 +110,8 @@ class AuthController extends Controller
         // Log error if needed but graceful fail
         \Illuminate\Support\Facades\Log::error('Onboarding API Error', ['status' => $response->status(), 'body' => $response->body()]);
         
-        // DEBUG: Force user to see the error (Removed after fix)
-        // dd('API ERROR ONBOARDING:', $response->status(), $response->body());
+        // DEBUG: Force user to see the error (Restored for debugging)
+        dd('API ERROR ONBOARDING:', $response->status(), $response->body());
 
         return back()->with('error', 'Gagal menyimpan preferensi. Silakan coba lagi.');
     }
@@ -283,8 +283,12 @@ class AuthController extends Controller
             $totalExpiring = count($expiringItems);
             $userBudget = is_array($userSession) ? ($userSession['budget'] ?? 0) : ($userSession->user_id ?? 0);
 
-            return view('dashboard', compact('expiringItems', 'shoppingList', 'recipes', 'isEmptyInventory', 
-                'totalInventory', 'totalExpiring', 'totalShoppingItems', 'totalShoppingCost', 'userBudget'));
+            try {
+                return view('dashboard', compact('expiringItems', 'shoppingList', 'recipes', 'isEmptyInventory', 
+                    'totalInventory', 'totalExpiring', 'totalShoppingItems', 'totalShoppingCost', 'userBudget'));
+            } catch (\Exception $e) {
+                dd('DASHBOARD VIEW ERROR:', $e->getMessage(), $e->getTraceAsString());
+            }
 
         } catch (\Exception $e) {
              return redirect()->route('login')->with('error', 'Gagal memuat dashboard. Silakan login ulang.');
