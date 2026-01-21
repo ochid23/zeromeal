@@ -95,6 +95,15 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
+        // FALLBACK: If running on a public route (like /magic-save), manually check Sanctum token
+        if (!$user) {
+            $user = auth('sanctum')->user();
+        }
+
+        if (!$user) {
+             return response()->json(['message' => 'Unauthenticated (Manual Check Failed)'], 401);
+        }
+
         // Validasi
         $validator = Validator::make($request->all(), [
             'nama' => 'sometimes|string|max:100',
