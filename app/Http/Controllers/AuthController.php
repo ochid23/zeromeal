@@ -93,13 +93,10 @@ class AuthController extends Controller
         ]);
 
         if ($response->status() === 401) {
-            // DEBUG: Check for DB Connection Split-Brain
-            $debugParams = $response->json();
-            $debugParams['server_db_default'] = config('database.default');
-            $debugParams['user_model_connection'] = (new User())->getConnectionName();
-            $debugParams['token_model_connection'] = (new \Laravel\Sanctum\PersonalAccessToken())->getConnectionName();
-            
-            dd('DEBUG 401 (API RESTORED):', $debugParams);
+            // Token expired or invalid (common after deployment/APP_KEY rotation)
+            Session::forget('api_token');
+            Session::forget('user');
+            return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir. Silakan login kembali untuk melanjutkan.');
         }
 
         if ($response->successful()) {

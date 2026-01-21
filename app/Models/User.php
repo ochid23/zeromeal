@@ -12,7 +12,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     // Use the API database connection
-    protected $connection = 'mysql_api';
+    // protected $connection = 'mysql_api'; // Removed to use default connection from config
 
     // PENTING: Menyesuaikan dengan Primary Key di database SQL Anda
     protected $primaryKey = 'user_id';
