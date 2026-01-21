@@ -73,20 +73,41 @@ class AuthController extends Controller
         ]);
 
         $userSession = Session::get('user');
+        // Handle object or array
         $userId = is_array($userSession) ? ($userSession['user_id'] ?? null) : ($userSession->user_id ?? null);
         
         if (!$userId) return redirect()->route('login');
 
         $preferences = json_encode($request->only('source', 'goal', 'cooking_frequency'));
 
-        $user = User::find($userId);
-        $user->preferensi = $preferences;
-        $user->save();
-        
-        // Update session user to include new preference
-        Session::put('user', $user);
+        // Call API to update user
+        // Assuming endpoint /users/{id} or /profile
+        // Let's try /users/{id} standard convention
+        $response = $this->apiService->put("/users/{$userId}", [
+            'preferensi' => $preferences
+        ]);
 
-        return redirect()->route('dashboard');
+        if ($response->successful()) {
+            // Update session user
+            $updatedUser = $response->json()['data'] ?? $userSession;
+             
+            // If response is just success status but not full user, merge manually
+            if (is_array($userSession)) {
+                $userSession['preferensi'] = $preferences;
+            } else {
+                $userSession->preferensi = $preferences;
+            }
+            // Use updated user from API if available and looks like a user object
+            if (isset($updatedUser['user_id'])) {
+                 Session::put('user', $updatedUser);
+            } else {
+                 Session::put('user', $userSession);
+            }
+
+            return redirect()->route('dashboard');
+        }
+
+        return back()->with('error', 'Gagal menyimpan preferensi. Silakan coba lagi.');
     }
 
     public function showRegisterForm()
@@ -138,10 +159,6 @@ class AuthController extends Controller
 
         if (!$userId) return redirect()->route('login');
 
-        // Note: 'users' table email unique check might need modification if ignoring current user, 
-        // but since we don't have standard Laravel Auth::id() for 'unique:users,email,id', 
-        // and we use a custom table/model, we'll do a simple check or rely on 'unique:users' if it works with our model.
-        // For simplicity with custom setup:
         // Validation
         $rules = [
             'nama' => 'required|string|max:100',
@@ -154,32 +171,44 @@ class AuthController extends Controller
         }
 
         $request->validate($rules);
-
-        $user = User::find($userId);
         
-        // Manual unique email check
-        $existingUser = User::where('email', $request->email)->where('user_id', '!=', $userId)->first();
-        if ($existingUser) {
-            return back()->withErrors(['email' => 'Email sudah digunakan pengguna lain.']);
-        }
-
-        // Verify Current Password if changing password
+        $data = [
+            'nama' => $request->nama,
+            'email' => $request->email,
+        ];
+        
         if ($request->filled('password')) {
-            if (!Hash::check($request->current_password, $user->password)) {
-                return back()->withErrors(['current_password' => 'Password lama salah.']);
-            }
-            $user->password = Hash::make($request->password);
+            $data['password'] = $request->password;
+            $data['current_password'] = $request->current_password;
         }
 
-        $user->nama = $request->nama;
-        $user->email = $request->email;
-        
-        $user->save();
+        // Call API
+        $response = $this->apiService->put("/users/{$userId}", $data);
 
-        // Update Session
-        Session::put('user', $user);
+        if ($response->successful()) {
+             $responseData = $response->json();
+             // Update Session
+             $updatedUser = $responseData['data'] ?? $responseData['user'] ?? null;
+             
+             if ($updatedUser) {
+                 Session::put('user', $updatedUser);
+             } else {
+                 // Fallback update session manually if API doesn't return user
+                 if (is_array($userSession)) {
+                     $userSession['nama'] = $request->nama;
+                     $userSession['email'] = $request->email;
+                 } else {
+                     $userSession->nama = $request->nama;
+                     $userSession->email = $request->email;
+                 }
+                 Session::put('user', $userSession);
+             }
 
-        return back()->with('success', 'Profil berhasil diperbarui!');
+             return back()->with('success', 'Profil berhasil diperbarui!');
+        }
+
+        $errorMsg = $response->json()['message'] ?? 'Gagal memperbarui profil.';
+        return back()->withErrors(['email' => $errorMsg]);
     }
 
     public function dashboard()
