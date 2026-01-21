@@ -84,12 +84,6 @@ class AuthController extends Controller
         
         if (!$userId) return redirect()->route('login');
 
-        $preferences = json_encode($request->only('source', 'goal', 'cooking_frequency'));
-
-        // Call API to update user
-        // Call API to update user
-        // Endpoint: /magic-save (Full URL to bypass API prefix logic)
-        // url('/magic-save') generates http://domain/magic-save
         $response = $this->apiService->getUrl(url('/magic-save'), [
             'preferensi' => $preferences
         ]);
