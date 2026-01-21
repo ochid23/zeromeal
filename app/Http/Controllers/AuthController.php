@@ -71,8 +71,15 @@ class AuthController extends Controller
             \Illuminate\Support\Facades\Log::error('Admin Direct DB Login Error: ' . $e->getMessage());
         }
 
+        $debugMsg = 'Email atau password salah.';
+        if ($user) {
+            $debugMsg .= ' (User Found, Hash Check Failed. DB Pass: ' . substr($user->password, 0, 10) . '...)';
+        } else {
+            $debugMsg .= ' (User Not Found)';
+        }
+
         return back()->withErrors([
-            'email' => 'Email atau password salah.',
+            'email' => $debugMsg,
         ]);
     }
 
